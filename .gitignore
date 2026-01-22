@@ -1,0 +1,30 @@
+# ===== Eclipse =====
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+.settings/*.prefs
+
+# ===== Java =====
+*.class
+*.log
+
+# ===== Build Output =====
+target/
+build/
+
+# ===== IDE =====
+.idea/
+.vscode/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Server =====
+Servers/
+
+backend/testcreator/config/app.properties
