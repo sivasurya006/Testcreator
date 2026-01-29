@@ -47,6 +47,7 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 			userId =  userservice.signin(userEmail, userPassword);
 			if(userId == -1) {
 				setError(new ApiError("Invalid email or password", 401));
+				System.out.println("I am called here login");
 				return LOGIN;
 			}
 			
@@ -69,24 +70,21 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 				this.authDto = new UserAuthenticationDto(true, token);
 			}else {
 				response.addCookie(cookie);
-				response.setHeader("Set-Cookie",
-				        String.format("%s=%s; HttpOnly; Secure; Path=%s; Max-Age=%d; SameSite=None",
-				                cookie.getName(),
-				                cookie.getValue(),
-				                cookie.getPath(),
-				                cookie.getMaxAge()));
+//				response.setHeader("Set-Cookie",
+//				        String.format("%s=%s; HttpOnly; Secure; Path=%s; Max-Age=%d; SameSite=None",
+//				                cookie.getName(),
+//				                cookie.getValue(),
+//				                cookie.getPath(),
+//				                cookie.getMaxAge()));
 
 				this.authDto = new UserAuthenticationDto(true, null);
 			}
 			return SUCCESS;
 		}catch (UserNotFoundException e) {
 			// TODO: logger
-			
+			setError(new ApiError("Invalid email or password", 401));
+			return LOGIN;
 		}
-		
-		setError(new ApiError("Invalid email or password", 401));
-		return ERROR;
-		
 	}
 
 	public UserAuthenticationDto getAuthDto() {

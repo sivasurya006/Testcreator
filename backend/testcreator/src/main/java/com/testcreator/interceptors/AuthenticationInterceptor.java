@@ -19,7 +19,11 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 	@Override
 	public String intercept(ActionInvocation invocation) throws Exception {
 	
+		
+		
 		HttpServletRequest request = (HttpServletRequest) ServletActionContext.getRequest();
+		
+		System.out.println(" path info " +request.getRequestURL());
 		
 		String clientType = request.getHeader("X-Client-Type");
 		String tokenValue = null;
@@ -74,6 +78,12 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 		Claims claims = jwtUtil.verifyToken(tokenValue) ;
 
 		if(claims != null) {
+			
+//			if(request.getRequestURL().toString().contains("testcreator/api/isLoggedin")) {
+//				System.out.println("redirected");
+//				return Action.SUCCESS;
+//			}
+			
 			request.setAttribute("token", claims);
 			request.setAttribute("userId", claims.getSubject());
 			return invocation.invoke();
