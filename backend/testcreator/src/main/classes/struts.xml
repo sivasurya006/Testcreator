@@ -19,10 +19,13 @@
 		<default-interceptor-ref name="apiStack" />
 
 		<global-results>
-			<result name="invalidJson" type="json">error</result>
+			<result name="invalidJson" type="json">
+				<param name="root">error</param>
+				<param name="statusCode">400</param>
+			</result>
 			<result name="error" type="json">
 				<param name="root">error</param>
-				<param name="statusCode">500</param>
+				<param name="statusCode">400</param>
 			</result>
 			<result name="input" type="json">
 				<param name="root">error</param>
@@ -85,7 +88,10 @@
 		<default-interceptor-ref name="authenticationStack"/>
 	
 		<global-results>
-			<result name="invalidJson" type="json">error</result>
+			<result name="invalidJson" type="json">
+				<param name="root">error</param>
+				<param name="statusCode">400</param>
+			</result>
 			<result name="error" type="json">
 				<param name="root">error</param>
 				<param name="statusCode">500</param>
@@ -96,7 +102,7 @@
 			</result>
 			<result name="duplicate" type="json">
 				<param name="root">error</param>
-				<param name="statusCode">200</param>
+				<param name="statusCode">409</param>
 			</result>
 			 <result name="login" type="json">
         		<param name="root">error</param>

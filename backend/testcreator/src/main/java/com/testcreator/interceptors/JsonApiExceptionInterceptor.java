@@ -21,7 +21,7 @@ public class JsonApiExceptionInterceptor extends AbstractInterceptor  {
 			}
 		}
 		
-		return Action.ERROR;
+		return "invalidJson";
 	}
 
 }

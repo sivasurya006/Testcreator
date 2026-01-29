@@ -91,7 +91,7 @@ public class ClassroomAction extends JsonApiAction implements ServletContextAwar
 	
 	public String allJoinedClassrooms() {
 		HttpServletRequest request = ServletActionContext.getRequest();
-		int userId = (int) request.getAttribute("userId");
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
 		if(userId <=0) {
 			setError(new ApiError("Authentication failed", 401));
 			return ERROR;
