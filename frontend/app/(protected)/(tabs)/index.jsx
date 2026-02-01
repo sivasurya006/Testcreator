@@ -1,11 +1,12 @@
 import { StyleSheet, Text, TextInput, Pressable, View, FlatList, Modal, Button, Platform } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useReducer, useState } from 'react'
 import api from '../../../util/api'
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import Colors from '../../../styles/Colors';
 import EmptyClassroom from '../../../src/components/EmptyClassroom';
 import Classroom from '../../../src/components/Classroom';
 import InputModal from '../../../src/components/modals/InputModal';
+import { useRouter } from 'expo-router';
 
 
 export default function Index() {
@@ -22,8 +23,11 @@ export default function Index() {
         setCreateModalVisible(false);
     }
 
+    const router = useRouter();
     useEffect(() => {
+        if (!selectedClassroomId) return;
         console.log(selectedClassroomId);
+        router.push(`/classroom/${selectedClassroomId}/`)
     },[selectedClassroomId])
 
     const onCancelCreateClassModal = () => setCreateModalVisible(false);
