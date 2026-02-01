@@ -138,7 +138,7 @@ async function deleteClassRoom(classroomId) {
 
 async function renameClass(id, newName) {
     try {
-        const result = await api.post('/api/rename-classroom', { classroomName: newName }, {
+        const result = await api.patch('/api/rename-classroom', { classroomName: newName }, {
             headers: {
                 'Content-type': 'application/json',
                 'X-ClassroomId': id
