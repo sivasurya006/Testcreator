@@ -1,0 +1,88 @@
+package com.testcreator.dto;
+
+import com.testcreator.model.TestStatus;
+
+public class TestDto {
+	private int testId;
+	private int creatorId;
+	private String creatorName;
+	private int classroomId;
+	private String classroomName;
+	private String testTitle;
+	private long createdAt;
+	private boolean isTimedTest;
+	private int durationMinutes;
+	private TestStatus status;
+	private int maximumAttempts;
+	
+	
+	
+	
+
+	public int getTestId() {
+		return testId;
+	}
+	public void setTestId(int testId) {
+		this.testId = testId;
+	}
+	public int getCreatorId() {
+		return creatorId;
+	}
+	public void setCreatorId(int creatorId) {
+		this.creatorId = creatorId;
+	}
+	public String getCreatorName() {
+		return creatorName;
+	}
+	public void setCreatorName(String creatorName) {
+		this.creatorName = creatorName;
+	}
+	public int getClassroomId() {
+		return classroomId;
+	}
+	public void setClassroomId(int classroomId) {
+		this.classroomId = classroomId;
+	}
+	public String getClassroomName() {
+		return classroomName;
+	}
+	public void setClassroomName(String classroomName) {
+		this.classroomName = classroomName;
+	}
+	public String getTestTitle() {
+		return testTitle;
+	}
+	public void setTestTitle(String testTitle) {
+		this.testTitle = testTitle;
+	}
+	public long getCreatedAt() {
+		return createdAt;
+	}
+	public void setCreatedAt(long createdAt) {
+		this.createdAt = createdAt;
+	}
+	public boolean isTimedTest() {
+		return isTimedTest;
+	}
+	public void setTimedTest(boolean isTimedTest) {
+		this.isTimedTest = isTimedTest;
+	}
+	public int getDurationMinutes() {
+		return durationMinutes;
+	}
+	public void setDurationMinutes(int durationMinutes) {
+		this.durationMinutes = durationMinutes;
+	}
+	public TestStatus getStatus() {
+		return status;
+	}
+	public void setStatus(TestStatus status) {
+		this.status = status;
+	}
+	public int getMaximumAttempts() {
+		return maximumAttempts;
+	}
+	public void setMaximumAttempts(int maximumAttempts) {
+		this.maximumAttempts = maximumAttempts;
+	}
+}
