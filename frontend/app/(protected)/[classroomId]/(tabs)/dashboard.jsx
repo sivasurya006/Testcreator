@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, FlatList, Pressable } from "react-native";
 import React, { useEffect, useState } from "react";
-import api from "../../../../../util/api";
-import Colors from "../../../../../styles/Colors";
+import api from "../../../../util/api";
+import Colors from "../../../../styles/Colors";
 
 export default function Dashboard({ classroomId }) {
   const [stats, setStats] = useState({
@@ -18,7 +18,11 @@ export default function Dashboard({ classroomId }) {
 
   async function fetchDashboardData() {
     try {
-      const res = await api.get(`/api/classroom-dashboard/${classroomId}`);
+      const res = await api.get("/api/classroom-details", {
+        headers: {
+           "X-Classroomid":classroomId
+        }
+      });
       if (res.status === 200) {
         setStats(res.data);
       }
