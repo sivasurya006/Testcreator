@@ -15,7 +15,7 @@ const api = axios.create({
 
 // console.log(api.interceptors)
 api.interceptors.request.use(async (config) => {
-    console.log("hoi");
+    console.log(config);
 
     if (Platform.OS != 'web') {
         try {
@@ -30,7 +30,6 @@ api.interceptors.request.use(async (config) => {
     }
     return config;
 });
-
 
 
 api.interceptors.response.use( null ,(error) => {
