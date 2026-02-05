@@ -9,129 +9,422 @@ import org.apache.struts2.interceptor.ServletRequestAware;
 
 import com.opensymphony.xwork2.ModelDriven;
 import com.testcreator.dto.ApiError;
+import com.testcreator.dto.QuestionDto;
+import com.testcreator.dto.SuccessDto;
 import com.testcreator.dto.TestDto;
 import com.testcreator.exception.ClassroomNotNoundException;
+import com.testcreator.exception.QuestionNotFoundException;
 import com.testcreator.exception.UnauthorizedException;
-import com.testcreator.model.Test;
+import com.testcreator.model.Option;
 import com.testcreator.model.TestStatus;
 import com.testcreator.service.TestService;
 
-public class TestAction extends JsonApiAction implements ServletRequestAware{
+public class TestAction extends JsonApiAction implements ServletRequestAware, ModelDriven<QuestionDto> {
 	
 	private TestDto testDto;
+	private QuestionDto questionDto = new QuestionDto();
+	private SuccessDto successDto;
+
 	private HttpServletRequest request;
-	private String testTitle;
 	private int limit;
 	private String status;
-	
+
 	private List<TestDto> allTests;
 
-	public void setTestTitle(String testTitle) {
-		this.testTitle = testTitle;
-	}
+	public String createTest() {
 
-
-	public String createTest() {	
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
-		if( testTitle == null || testTitle.isBlank()) {
+
+		String testTitle = questionDto.getTestTitle();
+
+		if (testTitle == null || testTitle.isBlank()) {
 			setError(new ApiError("Invalid test title", 400));
 			return INPUT;
-		}	
+		}
 		try {
 			TestService testService = new TestService();
 			this.testDto = testService.createNewTest(classroomId, userId, testTitle);
 			return SUCCESS;
-		}catch(UnauthorizedException e) {
-			setError(new ApiError("Authentication failed",401));
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
 			return LOGIN;
-		}catch (ClassroomNotNoundException e) {
-			setError(new ApiError("No record match",404));
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
 			return NOT_FOUND;
-		}
-		catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
-		setError(new ApiError("server error",500));
+
+		setError(new ApiError("server error", 500));
 		return ERROR;
 	}
-	
-	
+
 	public String fetchCreatedTests() {
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
 		try {
 			TestService testService = new TestService();
-			if(limit > 0) {
-				if(status != null) {
-					System.out.println("Status :"+status);
+			if (limit > 0) {
+				if (status != null) {
+					System.out.println("Status :" + status);
 					try {
 						TestStatus testStatus = TestStatus.valueOf(status.toUpperCase());
-						this.allTests = testService.getTestsByStatus(userId, classroomId,limit,testStatus);
+						this.allTests = testService.getTestsByStatus(userId, classroomId, limit, testStatus);
+					} catch (IllegalArgumentException e) {
+						this.allTests = testService.getAllTests(userId, classroomId, limit);
 					}
-					catch(IllegalArgumentException e) {
-						this.allTests = testService.getAllTests(userId, classroomId,limit);
-					}
-				}else {
-					this.allTests = testService.getAllTests(userId, classroomId,limit);
+				} else {
+					this.allTests = testService.getAllTests(userId, classroomId, limit);
 				}
-			}else {
-				if(status != null) {
-					System.out.println("Status :"+status);
+			} else {
+				if (status != null) {
+					System.out.println("Status :" + status);
 					try {
 						TestStatus testStatus = TestStatus.valueOf(status.toUpperCase());
-						this.allTests = testService.getTestsByStatus(userId, classroomId,testStatus);
-					}
-					catch(IllegalArgumentException e) {
+						this.allTests = testService.getTestsByStatus(userId, classroomId, testStatus);
+					} catch (IllegalArgumentException e) {
 						this.allTests = testService.getAllTests(userId, classroomId);
 					}
-				}else {
+				} else {
 					this.allTests = testService.getAllTests(userId, classroomId);
 				}
 			}
 			System.out.println(allTests);
 			return SUCCESS;
-		}catch(UnauthorizedException e) {
-			setError(new ApiError("Authentication failed",401));
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
 			return LOGIN;
-		}catch (ClassroomNotNoundException e) {
-			setError(new ApiError("No record match",404));
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
 			return NOT_FOUND;
-		}
-		catch (SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
-		setError(new ApiError("server error",500));
+
+		setError(new ApiError("server error", 500));
 		return ERROR;
 	}
 
-	
+	public void validateCreateQuestion() {
+		System.out.println("validate called");
+		if (questionDto == null || questionDto.getQuestionText() == null || questionDto.getQuestionText().isBlank()) {
+			addFieldError("questionText", "Invalid question text");
+		}
+
+		if (questionDto.getMarks() < 0) {
+			addFieldError("marks", "Invalid question marks");
+		}
+
+		if (questionDto.getType() == null) {
+			addFieldError("type", "Invalid question type");
+		}
+
+		if (questionDto.getOptions() != null) {
+			for (Option option : questionDto.getOptions()) {
+				if (option.getOptionId() < 0) {
+					addFieldError("options.optionId", "Invalid option id");
+				}
+				if (option.getOptionText() == null || option.getOptionText().isBlank()) {
+					addFieldError("options.optionText", "Invalid option text");
+				}
+				if (option.getOptionMark() < 0) {
+					addFieldError("options.optionMark", "Invalid option mark");
+				}
+			}
+		}
+
+		System.out.println("validate ended");
+	}
+
+	public String createQuestion() {
+		System.out.println("execute called");
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		int testId = (Integer) request.getAttribute("testId");
+
+		try {
+			TestService testService = new TestService();
+			this.questionDto = testService.createNewQuestion(userId, classroomId, testId, questionDto.getQuestionText(),
+					questionDto.getType(), questionDto.getMarks(), questionDto.getOptions());
+			System.out.println("execute success");
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			return LOGIN;
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+
+	public String fetchQuestionWithOption() {
+
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+
+		String questionIdheader = request.getHeader("X-QuestionId");
+		if (questionIdheader == null) {
+			setError(new ApiError("Question id not provided ", 400));
+			return INPUT;
+		}
+
+		int questionId = -1;
+		try {
+			questionId = Integer.parseInt(questionIdheader);
+		} catch (NumberFormatException e) {
+
+		}
+		if (questionId < 0) {
+			setError(new ApiError("Invalid Question Id", 400));
+			return INPUT;
+		}
+		try {
+			TestService testService = new TestService();
+			this.questionDto = testService.getQuestionWithOption(userId, classroomId, questionId);
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+
+	}
+
+	public String deleteQuestion() {
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+
+		String questionIdheader = request.getHeader("X-QuestionId");
+		if (questionIdheader == null) {
+			setError(new ApiError("Question id not provided ", 400));
+			return INPUT;
+		}
+
+		int questionId = -1;
+		try {
+			questionId = Integer.parseInt(questionIdheader);
+		} catch (NumberFormatException e) {
+
+		}
+		if (questionId < 0) {
+			setError(new ApiError("Invalid Question Id", 400));
+			return INPUT;
+		}
+
+		try {
+			TestService testService = new TestService();
+			boolean deleted = testService.deleteQuestion(userId, classroomId, questionId);
+			if (deleted) {
+				this.successDto = new SuccessDto("Question successfully deleted", 200, deleted);
+			} else {
+				this.successDto = new SuccessDto("Question not deleted", 422, deleted);
+			}
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+
+	}
+
+	public String deleteOption() {
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+
+		String optionIdheader = request.getHeader("X-OptionId");
+		if (optionIdheader == null) {
+			setError(new ApiError("Option id not provided ", 400));
+			return INPUT;
+		}
+
+		int optionId = -1;
+		try {
+			optionId = Integer.parseInt(optionIdheader);
+		} catch (NumberFormatException e) {
+
+		}
+		if (optionId < 0) {
+			setError(new ApiError("Invalid Option Id", 400));
+			return INPUT;
+		}
+
+		try {
+			TestService testService = new TestService();
+			boolean deleted = testService.deleteQuestion(userId, classroomId, optionId);
+			if (deleted) {
+				this.successDto = new SuccessDto("Option successfully deleted", 200, deleted);
+			} else {
+				this.successDto = new SuccessDto("Option not deleted", 422, deleted);
+			}
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+
+	}
+
+	public void validateUpdateQuestion() {
+		System.out.println("validate called");
+		if (questionDto == null || questionDto.getQuestionText() == null || questionDto.getQuestionText().isBlank()) {
+			addFieldError("questionText", "Invalid question text");
+		}
+
+		if (questionDto.getMarks() < 0) {
+			addFieldError("marks", "Invalid question marks");
+		}
+
+		if (questionDto.getType() == null) {
+			addFieldError("type", "Invalid question type");
+		}
+
+		if (questionDto.getOptions() != null) {
+			for (Option option : questionDto.getOptions()) {
+
+				if (option.getOptionId() < 0) {
+					addFieldError("options.optionId", "Invalid option id");
+				}
+				if (option.getOptionText() == null || option.getOptionText().isBlank()) {
+					addFieldError("options.optionText", "Invalid option text");
+				}
+				if (option.getOptionMark() < 0) {
+					addFieldError("options.optionMark", "Invalid option mark");
+				}
+			}
+		}
+
+		System.out.println("validate ended");
+	}
+
+	public String updateQuestion() {
+
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+
+		try {
+			TestService testService = new TestService();
+			boolean updated = testService.updateQuestion(userId, classroomId, questionDto);
+			if (updated) {
+				this.successDto = new SuccessDto("Option successfully updated", 200, updated);
+			} else {
+				this.successDto = new SuccessDto("Option not updated", 422, updated);
+			}
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException | QuestionNotFoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+
+	}
+
+	public String fetchTestQuestion() {
+		System.out.println("execute called");
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		int testId = (Integer) request.getAttribute("testId");
+
+		try {
+			TestService testService = new TestService();
+			this.testDto = testService.getAllTestQuestion(userId, classroomId, testId);
+			System.out.println("execute success");
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			return LOGIN;
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+
 	public TestDto getTestDto() {
 		return testDto;
 	}
-	
+
 	public void setLimit(int limit) {
 		this.limit = limit;
 	}
-	
+
 	public List<TestDto> getAllTests() {
 		return allTests;
 	}
-
 
 	public void setStatus(String status) {
 		this.status = status;
 	}
 
+	public QuestionDto getQuestionDto() {
+		return questionDto;
+	}
+
+	public void setQuestionDto(QuestionDto questionDto) {
+		this.questionDto = questionDto;
+	}
+
+	public SuccessDto getSuccessDto() {
+		return successDto;
+	}
 
 	@Override
 	public void setServletRequest(HttpServletRequest request) {
 		this.request = request;
 	}
-<<<<<<< HEAD
 
-=======
->>>>>>> ea7601214d1ee30837bdfb5dc38173ea777576cd
+	@Override
+	public QuestionDto getModel() {
+		return questionDto;
+	}
+
 }
