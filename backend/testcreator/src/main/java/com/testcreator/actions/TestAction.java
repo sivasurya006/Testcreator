@@ -15,6 +15,7 @@ import com.testcreator.dto.TestDto;
 import com.testcreator.exception.ClassroomNotNoundException;
 import com.testcreator.exception.QuestionNotFoundException;
 import com.testcreator.exception.UnauthorizedException;
+import com.testcreator.model.Context;
 import com.testcreator.model.Option;
 import com.testcreator.model.TestStatus;
 import com.testcreator.service.TestService;
@@ -42,9 +43,14 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 			setError(new ApiError("Invalid test title", 400));
 			return INPUT;
 		}
+		
+		Context context = new Context();
+		context.setClasssroomId(classroomId);
+		context.setUserId(userId);
+		
 		try {
 			TestService testService = new TestService();
-			this.testDto = testService.createNewTest(classroomId, userId, testTitle);
+			this.testDto = testService.createNewTest(context, testTitle);
 			return SUCCESS;
 		} catch (UnauthorizedException e) {
 			setError(new ApiError("Authentication failed", 401));
@@ -63,6 +69,9 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 	public String fetchCreatedTests() {
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		Context context = new Context();
+		context.setClasssroomId(classroomId);
+		context.setUserId(userId);
 		try {
 			TestService testService = new TestService();
 			if (limit > 0) {
@@ -70,24 +79,24 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 					System.out.println("Status :" + status);
 					try {
 						TestStatus testStatus = TestStatus.valueOf(status.toUpperCase());
-						this.allTests = testService.getTestsByStatus(userId, classroomId, limit, testStatus);
+						this.allTests = testService.getTestsByStatus(context, limit, testStatus);
 					} catch (IllegalArgumentException e) {
-						this.allTests = testService.getAllTests(userId, classroomId, limit);
+						this.allTests = testService.getAllTests(context, limit);
 					}
 				} else {
-					this.allTests = testService.getAllTests(userId, classroomId, limit);
+					this.allTests = testService.getAllTests(context, limit);
 				}
 			} else {
 				if (status != null) {
 					System.out.println("Status :" + status);
 					try {
 						TestStatus testStatus = TestStatus.valueOf(status.toUpperCase());
-						this.allTests = testService.getTestsByStatus(userId, classroomId, testStatus);
+						this.allTests = testService.getTestsByStatus(context, testStatus);
 					} catch (IllegalArgumentException e) {
-						this.allTests = testService.getAllTests(userId, classroomId);
+						this.allTests = testService.getAllTests(context);
 					}
 				} else {
-					this.allTests = testService.getAllTests(userId, classroomId);
+					this.allTests = testService.getAllTests(context);
 				}
 			}
 			System.out.println(allTests);
@@ -142,10 +151,12 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
 		int testId = (Integer) request.getAttribute("testId");
-
+		Context context = new Context();
+		context.setClasssroomId(classroomId);
+		context.setUserId(userId);
 		try {
 			TestService testService = new TestService();
-			this.questionDto = testService.createNewQuestion(userId, classroomId, testId, questionDto.getQuestionText(),
+			this.questionDto = testService.createNewQuestion(context, testId, questionDto.getQuestionText(),
 					questionDto.getType(), questionDto.getMarks(), questionDto.getOptions());
 			System.out.println("execute success");
 			return SUCCESS;
@@ -187,7 +198,7 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 		}
 		try {
 			TestService testService = new TestService();
-			this.questionDto = testService.getQuestionWithOption(userId, classroomId, questionId);
+			this.questionDto = testService.getQuestionWithOption(userId, classroomId,userId);
 			return SUCCESS;
 		} catch (UnauthorizedException e) {
 			setError(new ApiError("Authentication failed", 401));
@@ -229,7 +240,10 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		try {
 			TestService testService = new TestService();
-			boolean deleted = testService.deleteQuestion(userId, classroomId, questionId);
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			boolean deleted = testService.deleteQuestion(context,questionId);
 			if (deleted) {
 				this.successDto = new SuccessDto("Question successfully deleted", 200, deleted);
 			} else {
@@ -276,7 +290,10 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		try {
 			TestService testService = new TestService();
-			boolean deleted = testService.deleteQuestion(userId, classroomId, optionId);
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			boolean deleted = testService.deleteOption(userId, context,optionId);
 			if (deleted) {
 				this.successDto = new SuccessDto("Option successfully deleted", 200, deleted);
 			} else {
@@ -339,7 +356,10 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		try {
 			TestService testService = new TestService();
-			boolean updated = testService.updateQuestion(userId, classroomId, questionDto);
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			boolean updated = testService.updateQuestion(context,questionDto);
 			if (updated) {
 				this.successDto = new SuccessDto("Option successfully updated", 200, updated);
 			} else {
@@ -371,7 +391,7 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		try {
 			TestService testService = new TestService();
-			this.testDto = testService.getAllTestQuestion(userId, classroomId, testId);
+			this.testDto = testService.getAllTestQuestion(userId, classroomId,userId);
 			System.out.println("execute success");
 			return SUCCESS;
 		} catch (UnauthorizedException e) {
