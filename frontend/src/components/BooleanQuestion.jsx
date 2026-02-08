@@ -1,0 +1,97 @@
+import { View, Text, StyleSheet, Pressable } from 'react-native'
+import React, { useState } from 'react'
+import {  RadioButton } from 'react-native-paper';
+import Colors from '../../styles/Colors';
+import QuestionRow from './QuestionRow';
+
+export default function McqQuestion({ mode, question, options, questionNumber, onEdit, onDelete }) {
+
+    const [checked, setChecked] = useState([]);
+
+    if (mode === 'edit') {
+
+        let correctAnswer = options.filter(opt => opt.isCorrect).map(opt => opt.optionText).join(", ");
+
+        return (
+            <View style={styles.container}>
+                <QuestionRow onDelete={onDelete} onEdit={onEdit} question={question} questionNumber={questionNumber} />
+                <View style={styles.optionsList}>
+
+                        {options.map((opt, i) => {
+                            const isChecked = checked.includes(opt);
+                            return (
+                                <View style={{flexDirection:'row' , alignItems : 'center'}}>
+                                    <RadioButton 
+                                        value={opt.optionText}
+                                        status={isChecked ? 'checked' : 'unchecked'}
+                                        onPress={() => setChecked([opt])}
+                                    />
+                                    <Text>{opt.optionText}</Text>
+                                </View>  
+                            );
+                        })}
+                </View>
+                <View>
+                    <Text style={styles.correctAnswerLabel}>{"Correct answer : "}<Text style={styles.correctAnswerText}>{correctAnswer}</Text></Text>
+                </View>
+            </View>
+        );
+    }
+
+    return <Text>Under Dev</Text>;
+}
+
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 16,
+        backgroundColor: Colors.white,
+        marginVertical: 10,
+        borderBottomWidth: 0.3,
+        borderBottomColor: 'gray'
+    },
+    questionRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+    },
+    questionNumber: {
+        fontWeight: '700',
+    },
+    questionText: {
+        fontSize: 16,
+        fontWeight: '600',
+        flex: 1,
+        marginRight: 8,
+    },
+    toolsRow: {
+        flexDirection: 'row',
+        marginRight: 6,
+    },
+    questionMark: {
+        fontSize: 14,
+        fontWeight: '500',
+        alignSelf: 'center',
+    },
+    optionsList: {
+        marginTop: 8,
+        marginBottom: 12,
+    },
+    optionContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 6,
+    },
+    optionsText: {
+        fontSize: 15,
+    },
+    correctAnswerText: {
+        color: 'green',
+        fontWeight: 600,
+        fontSize: 16
+    },
+    correctAnswerLabel: {
+        fontWeight: 600,
+        fontSize: 16
+    }
+});
