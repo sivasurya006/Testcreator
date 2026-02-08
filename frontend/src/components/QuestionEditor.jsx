@@ -61,6 +61,10 @@ export default function QuestionEditor({ onConfirm, onCancel }) {
             setError("At least one correct option must be selected for MCQ and Single choice questions");
             return false;
         }
+        if(questionOptions.find(opt => opt.isCorrect) === undefined){
+            setError("At least one correct option must be selected");
+            return false;
+        }
         if(questionOptions.find(opt => opt.isCorrect).optionText.trim() === ""){
             setError("Correct option text cannot be empty");
             return false;
@@ -152,6 +156,7 @@ export default function QuestionEditor({ onConfirm, onCancel }) {
                                     questionType: selectedType.value,
                                     options: questionOptions.filter(opt => opt.optionText.trim() !== "")
                                 })
+                                onCancel();
                             }
                         }
                         }>

@@ -17,7 +17,7 @@ export default function McqQuestion({ mode, question, options, questionNumber, o
 
     if (mode === 'edit') {
 
-        let correctAnswer = ""
+        let correctAnswer = options.filter(opt => opt.isCorrect).map(opt => opt.optionText).join(", ");
 
         return (
             <View style={styles.container}>

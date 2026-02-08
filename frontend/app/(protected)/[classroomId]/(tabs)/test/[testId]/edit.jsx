@@ -5,6 +5,7 @@ import QuestionEditor from '../../../../../../src/components/QuestionEditor';
 import { Modal, Portal } from 'react-native-paper'
 import SingleChoiceQuestion from '../../../../../../src/components/SingleChoiceQuestion';
 import McqQuestion from '../../../../../../src/components/McqQuestion';
+import BooleanQuestion from '../../../../../../src/components/BooleanQuestion';
 
 
 // {
@@ -83,6 +84,18 @@ export default function Edit() {
                                                 onDelete={openAddQuesModal}
                                             />
                                         )
+                                    case 'BOOLEAN' : {
+                                        return (
+                                            <BooleanQuestion
+                                                mode="edit"
+                                                question={item.question}
+                                                options={item.options}
+                                                questionNumber={index + 1}
+                                                onEdit={openAddQuesModal}
+                                                onDelete={openAddQuesModal}
+                                            />
+                                        )
+                                    }
                                     default:
                                         return null;
                                 }
