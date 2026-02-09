@@ -148,6 +148,10 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 				}
 			}
 		}
+		
+		if(hasFieldErrors()) {
+			System.out.println("fieald errors");
+		}
 
 		System.out.println("validate ended");
 	}
@@ -164,6 +168,7 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 			TestService testService = new TestService();
 			this.questionDto = testService.createNewQuestion(context, testId, questionDto.getQuestionText(),
 					questionDto.getType(), questionDto.getMarks(), questionDto.getOptions());
+			System.out.println(questionDto);
 			System.out.println("execute success");
 			return SUCCESS;
 		} catch (UnauthorizedException e) {
@@ -397,7 +402,9 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		try {
 			TestService testService = new TestService();
-			this.testDto = testService.getAllTestQuestion(userId, classroomId,userId);
+			System.out.println(classroomId+" "+userId+" "+testId);
+			this.testDto = testService.getAllTestQuestion(userId, classroomId,testId);
+			System.out.println(testDto.getQuestions());
 			System.out.println("execute success");
 			return SUCCESS;
 		} catch (UnauthorizedException e) {

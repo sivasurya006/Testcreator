@@ -4,7 +4,7 @@ import { Checkbox, IconButton } from 'react-native-paper';
 import Colors from '../../styles/Colors';
 import QuestionRow from './QuestionRow';
 
-export default function McqQuestion({ mode, question, options, questionNumber, onEdit, onDelete }) {
+export default function McqQuestion({ mode, question, options, questionNumber, onEdit, onDelete , setAllQuestions , allQuestions }) {
 
     const [checked, setChecked] = useState([]);
 
@@ -17,11 +17,11 @@ export default function McqQuestion({ mode, question, options, questionNumber, o
 
     if (mode === 'edit') {
 
-        let correctAnswer = ""
+        let correctAnswer = options.filter(opt => opt.isCorrect).map(opt => opt.optionText).join(", ");
 
         return (
             <View style={styles.container}>
-                <QuestionRow onDelete={onDelete} onEdit={onEdit} question={question} questionNumber={questionNumber} />
+                <QuestionRow onDelete={onDelete} onEdit={onEdit} question={question} questionNumber={questionNumber} setAllTestQuestions={setAllQuestions} allQuestions={allQuestions}/>
                 <View style={styles.optionsList}>
                     {options.map((opt, i) => {
                         const isChecked = checked.includes(opt);
@@ -53,9 +53,9 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         backgroundColor: Colors.white,
-        borderRadius: 8,
         marginVertical: 10,
-        elevation: 2,
+        borderBottomWidth : 0.3,
+        borderBottomColor : 'gray'
     },
     questionRow: {
         flexDirection: 'row',

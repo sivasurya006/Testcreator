@@ -164,11 +164,12 @@
 
 		</action>
 
-		<action name="create-question"
+		<action name="createQuestion"
 			class="com.testcreator.actions.TestAction" method="createQuestion">
 
 			<result name="success" type="json">
 				<param name="root">questionDto</param>
+				<param name="excludeNullProperties">true</param>
 			</result>
 			<result name="input" type="json">
 				<param name="root">fieldErrors</param>
@@ -188,7 +189,7 @@
 			<interceptor-ref name="testIdInterceptor" />
 		</action>
 
-		<action name="delete-question"
+		<action name="deleteQuestion"
 			class="com.testcreator.actions.TestAction" method="deleteQuestion">
 			<result name="success" type="json">
 				<param name="root">successDto</param>
@@ -213,13 +214,19 @@
 			<interceptor-ref name="testActionStack" />
 			<interceptor-ref name="testIdInterceptor" />
 		</action>
+<<<<<<< HEAD
 
 
 		<action name="get-all-questions"
+=======
+		
+		
+		<action name="getTestQuestions"
+>>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 			class="com.testcreator.actions.TestAction" method="fetchTestQuestion">
 
 			<result name="success" type="json">
-				<param name="root">testDto</param>
+				<param name="root">testDto.questions</param>
 				<param name="excludeNullProperties">true</param>
 			</result>
 			<interceptor-ref name="testActionStack" />

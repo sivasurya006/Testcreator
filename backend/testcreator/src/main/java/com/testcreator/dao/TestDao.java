@@ -74,7 +74,7 @@ public class TestDao {
 					testDto.setTimedTest(rs.getBoolean("is_timed"));
 					testDto.setDurationMinutes(rs.getInt("duration_minutes"));
 					testDto.setStatus(TestStatus.valueOf(rs.getString("status").toUpperCase()));
-					testDto.setMaximumAttempts(rs.getInt("maximumAttempts"));
+					testDto.setMaximumAttempts(rs.getInt("maximum_attempts"));
 				} else {
 					throw new SQLException("Can't get create test");
 				}
@@ -97,7 +97,7 @@ public class TestDao {
 				allTests = new LinkedList<TestDto>();
 				while (rs.next()) {
 					TestDto testDto = new TestDto();
-//					test_id | classroom_id | creator_id | title  | correction_type | created_at          | is_timed | duration_minutes | status | maximumAttempts 
+//					test_id | classroom_id | creator_id | title  | correction_type | created_at          | is_timed | duration_minutes | status | maximum_attempts 
 					testDto.setTestId(rs.getInt("test_id"));
 					testDto.setClassroomId(rs.getInt("classroom_id"));
 //					testDto.setCreatorId(rs.getInt("creator_id"));
@@ -108,7 +108,7 @@ public class TestDao {
 					testDto.setTimedTest(rs.getBoolean("is_timed"));
 					testDto.setDurationMinutes(rs.getInt("duration_minutes"));
 					testDto.setStatus(TestStatus.valueOf(rs.getString("status").toUpperCase()));
-					testDto.setMaximumAttempts(rs.getInt("maximumAttempts"));
+					testDto.setMaximumAttempts(rs.getInt("maximum_attempts"));
 					allTests.add(testDto);
 				}
 			}
@@ -132,7 +132,7 @@ public class TestDao {
 				allTests = new LinkedList<TestDto>();
 				while (rs.next()) {
 					TestDto testDto = new TestDto();
-//					test_id | classroom_id | creator_id | title  | correction_type | created_at          | is_timed | duration_minutes | status | maximumAttempts 
+//					test_id | classroom_id | creator_id | title  | correction_type | created_at          | is_timed | duration_minutes | status | maximum_attempts 
 					testDto.setTestId(rs.getInt("test_id"));
 					testDto.setClassroomId(rs.getInt("classroom_id"));
 //					testDto.setCreatorId(rs.getInt("creator_id"));
@@ -143,7 +143,7 @@ public class TestDao {
 					testDto.setTimedTest(rs.getBoolean("is_timed"));
 					testDto.setDurationMinutes(rs.getInt("duration_minutes"));
 					testDto.setStatus(TestStatus.valueOf(rs.getString("status").toUpperCase()));
-					testDto.setMaximumAttempts(rs.getInt("maximumAttempts"));
+					testDto.setMaximumAttempts(rs.getInt("maximum_attempts"));
 					allTests.add(testDto);
 				}
 			}
@@ -176,7 +176,16 @@ public class TestDao {
 					questionDto.setQuestionText(questionText);
 					questionDto.setType(type);
 					if (options != null) {
-						questionDto.setOptions(createNewOptions(questionId, options));
+						switch (questionDto.getType()) {						
+						case SINGLE : 
+						case MCQ : 
+						case BOOLEAN : {
+							questionDto.setOptions(createNewOptions(questionId, options));
+							break;
+						}
+						default:
+							throw new IllegalArgumentException("Unexpected value: " + questionDto.getType()) ;
+						}
 					}
 				} else {
 					throw new SQLException("Can't get the generated question id");
@@ -245,7 +254,7 @@ public class TestDao {
 					Statement.RETURN_GENERATED_KEYS)) {
 				ps.setInt(1, questionId);
 				ps.setString(2, option.getOptionText());
-				ps.setBoolean(3, option.isCorrect());
+				ps.setBoolean(3, option.getCorrect());
 				ps.setInt(4, option.getOptionMark());
 
 				int affectedRows = ps.executeUpdate();
@@ -259,9 +268,11 @@ public class TestDao {
 						Option createdOption = new Option();
 						createdOption.setOptionId(rs.getInt(1));
 						createdOption.setOptionText(option.getOptionText());
-						createdOption.setOptionMark(option.getOptionMark());
-						createdOption.setCorrect(option.isCorrect());
-
+//						createdOption.setOptionMark(option.getOptionMark());
+						System.out.println(option.getCorrect());
+						if (option.getCorrect()) {
+							createdOption.setCorrect(true);
+						}
 						createdOptions.add(createdOption);
 					} else {
 						throw new SQLException("Can't get the generated option id");
@@ -270,6 +281,7 @@ public class TestDao {
 
 			}
 		}
+		System.out.println(createdOptions);
 		return createdOptions;
 	}
 
@@ -305,7 +317,7 @@ public class TestDao {
 
 					try (PreparedStatement optionUpdate = connection.prepareStatement(Queries.updateOptions)) {
 						optionUpdate.setString(1, option.getOptionText());
-						optionUpdate.setBoolean(2, option.isCorrect());
+						optionUpdate.setBoolean(2, option.getCorrect());
 						optionUpdate.setInt(3, option.getOptionMark());
 						optionUpdate.setInt(4, option.getOptionId());
 						optionUpdate.executeUpdate();
@@ -318,14 +330,23 @@ public class TestDao {
 			}
 		}
 	}
+<<<<<<< HEAD
+
+	public TestDto getTestQuestions(int testId, boolean showAnswers) throws SQLException {
+=======
+>>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 
 	public TestDto getTestQuestions(int testId, boolean showAnswers) throws SQLException {
 
+		
+		
 		TestDto testDto = null;
 		
 
 		try (PreparedStatement ps = connection.prepareStatement(Queries.getAllQuestionsWithOptions)) {
 
+			System.out.println(testId+" test Id");
+			
 			ps.setInt(1, testId);
 
 			try (ResultSet rs = ps.executeQuery()) {
@@ -333,6 +354,8 @@ public class TestDao {
 				Map<Integer, QuestionDto> questionMap = new LinkedHashMap<>();
 
 				while (rs.next()) {
+					
+					
 
 					// ---------- Test ----------
 					if (testDto == null) {
@@ -349,19 +372,28 @@ public class TestDao {
 						testDto.setCreatedAt(rs.getTimestamp("created_at").getTime());
 						testDto.setTimedTest(rs.getBoolean("is_timed"));
 						testDto.setDurationMinutes(rs.getInt("duration_minutes"));
+<<<<<<< HEAD
 						testDto.setMaximumAttempts(rs.getInt("maximumAttempts"));
+=======
+						testDto.setMaximumAttempts(rs.getInt("maximum_attempts"));
+>>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 						if (showAnswers) {
 							testDto.setStatus(TestStatus.valueOf(rs.getString("status").toUpperCase()));
 							testDto.setCorrectionMethod(
 									CorrectionMethod.valueOf(rs.getString("correction_type").toUpperCase()));
 						}
+
 						testDto.setQuestions(new LinkedList<>());
 					}
+					
+					System.out.println(testDto.getTestTitle());
 
 					int questionId = rs.getInt("question_id");
 
+					System.out.println("Hello "+questionId);
+					
 					if (questionId > 0) {
-
+						
 						// ---------- Question ----------
 						QuestionDto questionDto = questionMap.get(questionId);
 
@@ -397,6 +429,7 @@ public class TestDao {
 		return testDto;
 	}
 
+<<<<<<< HEAD
 	public TestDto getTestCount(int userId) {
 		TestDto testDto = null;
 		try (PreparedStatement ps = connection.prepareStatement(Queries.selectTestCount)) {
@@ -419,4 +452,6 @@ public class TestDao {
 		return testDto;
 	}
 
+=======
+>>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 }
