@@ -382,11 +382,7 @@ public class TestDao {
 						testDto.setCreatedAt(rs.getTimestamp("created_at").getTime());
 						testDto.setTimedTest(rs.getBoolean("is_timed"));
 						testDto.setDurationMinutes(rs.getInt("duration_minutes"));
-<<<<<<< HEAD
-						testDto.setMaximumAttempts(rs.getInt("maximumAttempts"));
-=======
 						testDto.setMaximumAttempts(rs.getInt("maximum_attempts"));
->>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 						if (showAnswers) {
 							testDto.setStatus(TestStatus.valueOf(rs.getString("status").toUpperCase()));
 							testDto.setCorrectionMethod(
@@ -439,7 +435,6 @@ public class TestDao {
 		return testDto;
 	}
 
-<<<<<<< HEAD
 	public TestDto getTestCount(int userId) {
 		TestDto testDto = null;
 		try (PreparedStatement ps = connection.prepareStatement(Queries.selectTestCount)) {
@@ -462,6 +457,4 @@ public class TestDao {
 		return testDto;
 	}
 
-=======
->>>>>>> e092c5e632b983be09b6a160f4b45c6c691edfd2
 }
