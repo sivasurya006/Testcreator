@@ -115,7 +115,7 @@
 			</result>
 		</action>
 
-		<action name="classroomdetail"
+		<action name="classroomcount"
 			class="com.testcreator.actions.TestAction" method="getTestCount">
 			<result name="success" type="json">
 				<param name="root">testDto</param>
