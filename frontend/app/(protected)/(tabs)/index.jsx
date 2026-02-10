@@ -7,6 +7,7 @@ import EmptyClassroom from '../../../src/components/EmptyClassroom';
 import Classroom from '../../../src/components/Classroom';
 import InputModal from '../../../src/components/modals/InputModal';
 import { useRouter } from 'expo-router';
+import { fonts } from '../../../styles/fonts';
 
 const classroom_width = 320;
 
@@ -142,6 +143,7 @@ const styles = StyleSheet.create({
 
     topBarHeader: {
         fontSize: 18,
+        fontFamily : fonts.bold
     },
 
     addButton: {

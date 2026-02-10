@@ -42,7 +42,7 @@ export default function Edit() {
 
     async function addQuestion(question) {
         console.log('question to add ', question)
-        console.log(makeQuestionPayload(question))
+        console.log("maked : ",makeQuestionPayload(question))
         const newQuestion = await createNewQuestion(makeQuestionPayload(question), classroomId, testId);
         console.log(newQuestion)
         if (!newQuestion) return;
@@ -185,7 +185,7 @@ async function getAllTestQuestion(classroomId, testId) {
             }
         });
 
-        if (result?.status == 200) {
+        if (result?.status == 200 && result.data) {
             console.log(result.data);
             console.log("questions fetched successfully");
             return result.data;
@@ -239,6 +239,9 @@ async function createNewQuestion(question, classroomId, testId) {
 
 
 function makeQuestionPayload(input) {
+
+    console.log('payload inp : ',input)
+
     const payload = {
         marks: Number(input.question.marks),
         questionText: input.question.questionText,
@@ -246,8 +249,9 @@ function makeQuestionPayload(input) {
         options: input.options.map((opt) => ({
             optionText: opt.optionText,
             correct: opt.correct ? true : false,
-            optionMark: opt.optionMark ? Number(opt.mark) : 0
+            optionMark: opt.optionMark ? Number(opt.optionMark) : 0
         }))
     };
+
     return payload
 }
