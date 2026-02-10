@@ -586,7 +586,6 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 	public String getTestCount() {
 		HttpServletRequest request = ServletActionContext.getRequest();
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
-
 		try {
 			TestService testService = new TestService();
 			this.testDto = testService.getTestCount(userId);
@@ -594,6 +593,7 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 			return SUCCESS;
 		} catch (UnauthorizedException e) {
 			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
 			return LOGIN;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

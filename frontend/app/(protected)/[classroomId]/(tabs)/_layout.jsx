@@ -5,7 +5,6 @@ import { FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@e
 import Colors from '../../../../styles/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClassroomTabBar } from '../../../../src/components/ClassroomTobBar';
-
 export default function ClassroomLayout() {
 
     const { width } = useWindowDimensions();
