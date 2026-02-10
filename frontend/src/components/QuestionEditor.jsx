@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Modal, Button, ScrollView, useWindowDimensions, Pressable } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Colors from '../../styles/Colors'
 import LabeledInput from './LabledInput'
 import LabeledTextArea from './LabledTextArea'
@@ -42,21 +42,27 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
 
     const [giveOptionMarks, setGiveOptionMarks] = useState(false);
     const [selectedType, setSelectedType] = useState(mode === 'editQuestion' ?
-        getOptionIndex(defaultQuestion.type) : options[0]);
+        options[getOptionIndex(defaultQuestion.type)] : options[0]);
     const [questionText, setQuestionText] = useState("");
     const [questionMark, setQuestionMark] = useState(0);
     const [questionOptions, setQuestionOptions] = useState([]);
     const [error, setError] = useState("");
+
+    useEffect(()=>{
+        if (defaultQuestion && defaultQuestion.options && defaultQuestion.options.length > 0) {
+            setGiveOptionMarks(defaultQuestion.options.some(opt => opt.optionMark && opt.optionMark > 0)); 
+            setQuestionMark(defaultQuestion.marks);
+            setQuestionText(defaultQuestion.questionText)
+        }
+    },[])
+
+    console.log(selectedType)
 
     const { width } = useWindowDimensions();
     function validateInput() {
         setError("")
         if (questionText.trim() === "") {
             setError("Question text cannot be empty");
-            return false;
-        }
-        if ((selectedType.value === 'MCQ' || selectedType.value === 'SINGLE') && questionOptions.length < 2) {
-            setError("At least 2 options are required for MCQ and Single choice questions");
             return false;
         }
         if (questionOptions.filter(opt => opt.optionText.trim() !== "").length == 0) {
@@ -165,7 +171,10 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                                 onConfirm({
                                     question: {
                                         questionText,
-                                        marks: questionMark
+                                        marks: questionMark,
+                                        ...(isEditMode && {
+                                            questionId : defaultQuestion.id
+                                        })
                                     },
                                     questionType: selectedType.value,
                                     options: questionOptions.filter(opt => opt.optionText.trim() !== "")
@@ -223,7 +232,7 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primaryColor,
         padding: 10,
         borderRadius: 5,
-        width: 120,
+        width: 170,
         alignItems: 'center',
     },
 });

@@ -50,7 +50,7 @@ export default function ProtectedLayout() {
                 headerShown: false,
                 tabBarStyle: Platform.select({
                     web: {
-                        minWidth: 60,
+                        minWidth: 230,
                         backgroundColor: Colors.secondaryColor
                     },
                     android: {
@@ -62,7 +62,7 @@ export default function ProtectedLayout() {
                         backgroundColor: Colors.secondaryColor
                     }
                 }),
-                tabBarShowLabel: false,
+                tabBarShowLabel: isLargeScreen,
                 tabBarActiveTintColor: Colors.primaryColor,
                 tabBarInactiveTintColor: Colors.white,
                 tabBarItemStyle: {
@@ -71,6 +71,7 @@ export default function ProtectedLayout() {
                 tabBarActiveBackgroundColor: isLargeScreen ? '#ffffff20' : 'transparent'
             }}>
                 <Tabs.Screen name='index' options={{
+                    title: 'My Classrooms',
                     tabBarIcon: ({ color }) => (
                         <MaterialCommunityIcons
                             name="account-school"
@@ -81,6 +82,7 @@ export default function ProtectedLayout() {
                 }} />
 
                 <Tabs.Screen name='joinedClassrooms' options={{
+                    title: 'Joined Classrooms',
                     tabBarIcon: ({ color }) => (
                         <MaterialIcons name="school" size={30} color={color} />
                     ),
@@ -88,6 +90,7 @@ export default function ProtectedLayout() {
 
                 <Tabs.Screen
                     name='profile' options={{
+                        title: 'Profile',
                         tabBarIcon: ({ color }) => (
                             <MaterialIcons name='account-circle' size={30} color={color} />
                         )

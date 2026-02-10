@@ -123,7 +123,7 @@ async function deleteQuestion(classroomId, questionId, allQuestions, setAllTestQ
 
 async  function  editQuestion(question,classroomId, questionId) {
     try{
-        const response = await api.patch(`/api/tests/editQuestion`, {
+        const response = await api.patch(`/api/tests/updateQuestion`, {
             ...question
         }, {
             headers: {
@@ -160,13 +160,14 @@ async function getQuestionDetails(classroomId, questionId) {
             console.error('Failed to fetch question details');
         }
     } catch (error) {
-        console.error('Error fetching question details:', error);
+        console.error( error);
     }
     return null;
 }
 
 
 function makeQuestionPayload(input) {
+    console.log('Input ',input)
     return {
         id : input.question.questionId,
         marks: Number(input.question.marks),
@@ -176,7 +177,7 @@ function makeQuestionPayload(input) {
             optionId: opt.optionId,
             optionText: opt.optionText,
             correct: opt.correct ? true : false,
-            optionMark: opt.optionMark ? Number(opt.mark) : 0
+            optionMark: opt.optionMark ? Number(opt.optionMark) : 0
         }))
     };
 }

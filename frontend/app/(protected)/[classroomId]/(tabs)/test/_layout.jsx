@@ -67,18 +67,20 @@ export default function TestsLayout() {
                     options={({ route }) => ({
                         title: route.params?.title || 'Test Details',
                         drawerItemStyle: { display: 'none' },
-                        headerRight: () => (
-                            <Pressable onPress={() => {
-                                router.replace({
-                                    pathname: '/[classroomId]/test/createTest',
-                                    params: {
-                                        classroomId : route.params?.classroomId,
-                                    },
-                                });
-                            }} style={{ padding: 6 , marginRight : 20 }}>
-                                <Ionicons name="arrow-back" size={24} color={Colors.white} />
-                            </Pressable>
-                        )
+                        // headerRight: () => (
+                        //     <Pressable onPress={() => {
+                        //         router.replace({
+                        //             pathname: '/[classroomId]/test/createTest',
+                        //             params: {
+                        //                 classroomId : route.params?.classroomId,
+                        //             },
+                        //         });
+                        //     }} style={{ padding: 6 , marginRight : 20 }}>
+                        //         <Ionicons name="arrow-back" size={24} color={Colors.white} />
+                        //     </Pressable>
+                        // )
+
+                       
                     })}
 
                 />

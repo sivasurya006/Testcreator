@@ -7,8 +7,10 @@ import Colors from '../../styles/Colors';
 
 const MCQComponent = ({ giveOptionMarks, options, setOptions, defaultOptions }) => {
 
+    
+
     useEffect(() => {
-        if (defaultOptions && defaultOptions.length > 0) {
+        if (defaultOptions && defaultOptions.length > 0) {  
             setOptions(defaultOptions);
         }
         else {
@@ -68,7 +70,8 @@ const MCQComponent = ({ giveOptionMarks, options, setOptions, defaultOptions }) 
                                 value={opt.optionMark}
                                 onChangeText={text => {
                                     const newOptions = [...options];
-                                    newOptions[idx].optionMark = text;
+                                    newOptions[idx].optionMark = Number(text);
+                                    console.log("newOptions ",newOptions)
                                     setOptions(newOptions);
                                 }}
                                 style={[styles.input, { width: 80 }]}
@@ -109,6 +112,9 @@ const MCQComponent = ({ giveOptionMarks, options, setOptions, defaultOptions }) 
 const SingleComponent = ({ giveOptionMarks, options, setOptions, defaultOptions }) => {
     useEffect(() => {
         if (defaultOptions && defaultOptions.length > 0) {
+
+            console.log('setting default options ', defaultOptions)
+
             setOptions(defaultOptions);
         } else {
             setOptions([
@@ -176,6 +182,8 @@ const SingleComponent = ({ giveOptionMarks, options, setOptions, defaultOptions 
                             />
                         ) : null
                     }
+
+                    {console.log('option ', opt.optionText, ' correct ', opt.correct)}
 
                     <Checkbox
                         status={opt.correct ? 'checked' : 'unchecked'}

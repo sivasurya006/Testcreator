@@ -2,6 +2,7 @@ import { Stack } from 'expo-router'
 import AuthContextProvider from '../util/AuthContext'
 import { Provider as PaperProvider } from "react-native-paper"
 import { MD3LightTheme } from 'react-native-paper';
+import { useFonts } from 'expo-font';
 
 const theme = {
     ...MD3LightTheme,
@@ -18,6 +19,16 @@ const theme = {
 console.log({ ...MD3LightTheme.colors })
 
 export default function RootLayout() {
+
+  const [loaded] = useFonts({
+    InterRegular: require('../assests/fonts/Inter_18pt-Regular.ttf'),
+    InterMedium: require('../assests/fonts/Inter_18pt-Medium.ttf'),
+    InterSemiBold: require('../assests/fonts/Inter_18pt-SemiBold.ttf'),
+    InterBold: require('../assests/fonts/Inter_18pt-Bold.ttf'),
+  });
+
+  if (!loaded) return null;
+
     return (
         <AuthContextProvider>
             <PaperProvider theme = {theme}>
