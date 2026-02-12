@@ -23,6 +23,15 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 		
 		String clientType = request.getHeader("X-Client-Type");
 		String tokenValue = null;
+		String requestURI = request.getRequestURI()+"?"+request.getQueryString();
+		
+		if (requestURI.startsWith("/testcreator")) {
+			requestURI = requestURI.substring("/testcreator".length());
+		}
+		
+		boolean haveRedirect = requestURI.contains("/join");
+		
+		System.out.println("Path info : "+requestURI);
 		
 //		For mobile
 		if(clientType != null && clientType.equals("mobile")) {
@@ -30,7 +39,11 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 			if(authHeader == null || !authHeader.startsWith("Bearer ")) {
 				Object action = invocation.getAction();
 				if(action instanceof JsonApiAction jsonAction) {
-					jsonAction.setError(new ApiError("Authentication failed", 301));
+					ApiError apiError = new ApiError("Authentication failed", 301);
+					if(haveRedirect) {
+						apiError.setRedirectURI(requestURI);
+					}
+					jsonAction.setError(apiError);
 				}
 				return Action.LOGIN;
 			}
@@ -45,7 +58,11 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 			if(cookies == null) {
 				Object action = invocation.getAction();
 				if(action instanceof JsonApiAction jsonAction) {
-					jsonAction.setError(new ApiError("Authentication failed", 301));
+					ApiError apiError = new ApiError("Authentication failed", 301);
+					if(haveRedirect) {
+						apiError.setRedirectURI(requestURI);
+					}
+					jsonAction.setError(apiError);
 				}
 				return Action.LOGIN;
 			}
@@ -62,7 +79,11 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 		if(tokenValue == null) {
 			Object action = invocation.getAction();
 			if(action instanceof JsonApiAction jsonAction) {
-				jsonAction.setError(new ApiError("Authentication failed", 301));
+				ApiError apiError = new ApiError("Authentication failed", 301);
+				if(haveRedirect) {
+					apiError.setRedirectURI(requestURI);
+				}
+				jsonAction.setError(apiError);
 			}
 			return Action.LOGIN;
 		}
@@ -86,7 +107,11 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 			
 		Object action = invocation.getAction();
 		if(action instanceof JsonApiAction jsonAction) {
-			jsonAction.setError(new ApiError("Authentication failed", 301));
+			ApiError apiError = new ApiError("Authentication failed", 301);
+			if(haveRedirect) {
+				apiError.setRedirectURI(requestURI);
+			}
+			jsonAction.setError(apiError);
 		}
 		
 		return Action.LOGIN;

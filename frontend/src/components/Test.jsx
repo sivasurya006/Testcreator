@@ -148,7 +148,7 @@ export default function Test({ data, allTests, setAllTests }) {
                   <Entypo name="back-in-time" size={20} color="black" />
                 )
               }              
-              <Text> {data.status == 'DRAFT' ? 'Publish' : 'Un publish'} </Text>
+              <Text> {data.status == 'DRAFT' ? 'Publish' : 'UnPublish'} </Text>
             </Pressable>
           </View>
 
