@@ -25,18 +25,15 @@ public class ClassroomUser {
 		this.classroomId = classroomId;
 	}
 
-
-
 	public User getUser() {
 		return user;
 	}
 	public Long getJoinedAt() {
 		return joinedAt;
 	}
+
 	public UserRole getRole() {
 		return role;
 	}
-	
-	
-	
+
 }
