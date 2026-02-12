@@ -4,6 +4,8 @@ public class Context {
 
 	private int classsroomId;
 	private int userId;
+	private int testId;
+	
 	public int getClasssroomId() {
 		return classsroomId;
 	}
@@ -16,5 +18,12 @@ public class Context {
 	public void setUserId(int userId) {
 		this.userId = userId;
 	}
+	public int getTestId() {
+		return testId;
+	}
+	public void setTestId(int testId) {
+		this.testId = testId;
+	}
+	
 
 }
