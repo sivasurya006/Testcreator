@@ -1,14 +1,13 @@
 package com.testcreator.model;
 
-import java.time.Instant;
 
 public class ClassroomUser {
 	private final User user;
-	private final Instant joinedAt;
+	private final Long joinedAt;
 	private final UserRole role;
-	private int classroomId;
+	private Integer classroomId;
 	
-	public ClassroomUser(User user, Instant joinedAt, UserRole role) {
+	public ClassroomUser(User user, Long joinedAt, UserRole role) {
 		this.user = user;
 		this.joinedAt = joinedAt;
 		this.role = role;
@@ -16,13 +15,13 @@ public class ClassroomUser {
 	
 	
 	
-	public int getClassroomId() {
+	public Integer getClassroomId() {
 		return classroomId;
 	}
 
 
 
-	public void setClassroomId(int classroomId) {
+	public void setClassroomId(Integer classroomId) {
 		this.classroomId = classroomId;
 	}
 
@@ -31,7 +30,7 @@ public class ClassroomUser {
 	public User getUser() {
 		return user;
 	}
-	public Instant getJoinedAt() {
+	public Long getJoinedAt() {
 		return joinedAt;
 	}
 	public UserRole getRole() {
