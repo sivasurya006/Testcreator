@@ -5,7 +5,7 @@ import Colors from '../../styles/Colors';
 import { IconButton, Menu } from 'react-native-paper';
 import { router } from 'expo-router';
 
-export default function Test({ data }) {
+export default function Test({ allTests,data,setAllTests }) {
 
   const [isMenuVisible, setMenuVisible] = useState(false);
   const openMenu = () => setMenuVisible(true);
