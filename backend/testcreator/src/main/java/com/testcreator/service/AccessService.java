@@ -89,6 +89,7 @@ public class AccessService {
 		}
 		System.out.println("2");
 		int durationMinutes = testDao.getTestDuration(context.getTestId());
+		if(durationMinutes == 0) return true; // untimed test
 		long extra = 15; 
 		long startedAtMillis = attempt.getStartedAt().getTime();
 		long allowedTimeMillis = (durationMinutes * 60 + extra) * 1000;

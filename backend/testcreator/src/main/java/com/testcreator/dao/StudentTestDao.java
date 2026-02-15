@@ -37,7 +37,7 @@ public class StudentTestDao {
 				while(rs.next()) {
 					testDto = new TestDto();
 
-					testDto.setTestId(rs.getInt("testIds"));
+					testDto.setTestId(rs.getInt("testId"));
 
 					testDto.setTestId(rs.getInt("testId"));
 					testDto.setTestTitle(rs.getString("testTitle"));
