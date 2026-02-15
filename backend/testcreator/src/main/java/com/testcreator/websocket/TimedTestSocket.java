@@ -36,14 +36,17 @@ public class TimedTestSocket {
 	@OnOpen
 	public void onOpen(Session session) throws IOException, SQLException {
 		sessions.add(session);
-		System.out.println("New user connected on Test attempId "+session.getRequestParameterMap().get("attemptId"));
+		System.out.println("New user connected on Test attempId " + session.getRequestParameterMap().get("attemptId"));
 		int testId = Integer.parseInt(session.getRequestParameterMap().get("testId").get(0));
-		
-		 Connection connection = DBConnectionMaker.getInstance().getConnection();
-		 int durationMinutes = new TestDao(connection).getTestDuration(testId);
-		 
-		 System.out.println(durationMinutes+" durationMinutes");
-		
+
+		Connection connection = DBConnectionMaker.getInstance().getConnection();
+		int durationMinutes = new TestDao(connection).getTestDuration(testId);
+		if (durationMinutes == 0) {
+			System.out.println("Untimed Test");
+			session.close();
+		}
+		System.out.println(durationMinutes + " durationMinutes");
+
 		Runnable timeoutTask = () -> {
 			try {
 				if (session.isOpen()) {
@@ -54,7 +57,7 @@ public class TimedTestSocket {
 				e.printStackTrace();
 			}
 		};
-		
+
 		ScheduledFuture<?> future = scheduler.schedule(timeoutTask, durationMinutes, TimeUnit.MINUTES);
 		userTimers.put(session.getId(), future);
 	}
@@ -68,13 +71,13 @@ public class TimedTestSocket {
 	public void onClose(Session session) throws IOException {
 		sessions.remove(session);
 
-	    ScheduledFuture<?> future = userTimers.remove(session.getId());
+		ScheduledFuture<?> future = userTimers.remove(session.getId());
 
-	    if (future != null) {
-	        future.cancel(true);
-	    }
+		if (future != null) {
+			future.cancel(true);
+		}
 
-	    System.out.println("User disconnected");
+		System.out.println("User disconnected");
 
 	}
 
