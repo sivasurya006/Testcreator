@@ -7,11 +7,10 @@ import Test from "../../../../src/components/Test";
 import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LineChart, PieChart } from "react-native-chart-kit";
-import { fonts } from "../../../../styles/fonts";
-import { StatusBar } from "expo-status-bar";
-
-export default function Dashboard({ }) {
+import { useWindowDimensions } from "react-native";
+export default function Dashboard() {
   const { classroomId } = useGlobalSearchParams();
+  const screenWidth = Dimensions.get("window").width;
 
   const [stats, setStats] = useState({
     classroomName: "",
@@ -20,10 +19,12 @@ export default function Dashboard({ }) {
     totalStudents: 0,
   });
 
-  const [states, setStates] = useState({
-    testCount: 0,
-  });
 
+  const { width } = useWindowDimensions();
+  const screenwidth = width;
+
+  const isMobile = width <= 812;
+  const [states, setStates] = useState({ testCount: 0 });
   const [tests, setTests] = useState([]);
 
   useFocusEffect(
@@ -39,10 +40,10 @@ export default function Dashboard({ }) {
       const res = await api.get("/api/classroomdetails", {
         headers: { "X-ClassroomId": classroomId },
       });
-      if (res.status === 200) setStats(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+      if (res.status === 200) {
+        setStats(res.data);
+      }
+    } catch (err) { }
   }
 
   async function fetchDashboardCount() {
@@ -50,258 +51,403 @@ export default function Dashboard({ }) {
       const res = await api.get("/api/classroomcount", {
         headers: { "X-ClassroomId": classroomId },
       });
-      if (res.status === 200) setStates(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+      if (res.status === 200) {
+        setStates(res.data);
+      }
+    } catch (err) { }
   }
-
+  { console.log(classroomId) }
   async function fetchDashboardTests() {
     try {
-      const res = await api.get(
-        "/api/tests/get-created-tests?limit=5&status=published",
+      const res = await api.get("/api/tests/get-created-tests?limit=5&status=published",
         { headers: { "X-ClassroomId": classroomId } }
       );
-      if (res.status === 200) setTests(res.data);
-    } catch (err) {
-      console.log(err);
-    }
+      if (res.status === 200){
+      setTests(res.data);
+      }
+
+
+    
+    } catch (err) { }
   }
 
-  const screenWidth = Dimensions.get("window").width;
-
   const pieData = [
-    {
-      name: "Submitted",
-      population: 35,
-      color: "#4CAF50",
-      legendFontColor: "#333",
-      legendFontSize: 14,
-    },
-    {
-      name: "Not Submitted",
-      population: 15,
-      color: "#F44336",
-      legendFontColor: "#333",
-      legendFontSize: 14,
-    },
+    { name: "Submitted", population: 35, color: "#4CAF50", legendFontColor: "#333", legendFontSize: 12 },
+    { name: "Not Submitted", population: 15, color: "#F87171", legendFontColor: "#333", legendFontSize: 12 },
   ];
-  const array = [
-    { name: "Pirthika", score: 95 },
-    { name: "Arun", score: 90 },
-    { name: "Divya", score: 88 },
-    { name: "Divya", score: 88 },
 
-    { name: "Divya", score: 88 },
-
-  ];
   const lineData = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May"],
     datasets: [{ data: [25, 72, 69, 90, 70] }],
   };
+
+  const array = [
+    {
+      id: 1,
+      name: "Deepa",
+      score: 95,
+    },
+    {
+      id: 2,
+      name: "Arun",
+      score: 89,
+    },
+    {
+      id: 3,
+      name: "Priya",
+      score: 92,
+    },
+    {
+      id: 4,
+      name: "Karthik",
+      score: 88,
+    },
+    {
+      id: 5,
+      name: "Meena",
+      score: 97,
+    },
+  ];
+
+
   return (
-    <>
-      <StatusBar translucent />
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.Cards}>
-            <View style={styles.smallCardRow}>
-              <View style={styles.smallCard}>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+
+        {isMobile ? (
+          <>
+
+            <View style={styles.cardRowMobile}>
+              <View style={styles.smallCardMobile}>
+                <MaterialIcons name="assignment" size={26} color={Colors.primaryColor} />
                 <View>
-                  <MaterialIcons name="assignment" size={34} color={Colors.primaryColor} />
-
+                  <Text style={styles.cardTitleMobile}>Tests</Text>
+                  <Text style={styles.cardNumberMobile}>{states.testCount}</Text>
                 </View>
-                <View style={styles.Count}>
-                  <Text style={styles.cardTitle}>Total Tests</Text>
-                  <Text style={styles.cardNumber}>{states.testCount}</Text>
-                </View>
-
               </View>
 
-              <View style={styles.smallCard}>
+              <View style={styles.smallCardMobile}>
+                <MaterialIcons name="people" size={26} color={Colors.primaryColor} />
                 <View>
-                  <MaterialIcons name="people" size={34} color={Colors.primaryColor} />
-                </View>
-                <View style={styles.Count}>
-                  <Text style={styles.cardTitle}>Total Students</Text>
-                  <Text style={styles.cardNumber}>{stats.totalStudents}</Text>
+                  <Text style={styles.cardTitleMobile}>Students</Text>
+                  <Text style={styles.cardNumberMobile}>{stats.totalStudents}</Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.detailCard}>
-              <View style={styles.classroomDeatilTop}></View>
-              <View style={styles.ClassRoomCard}></View>
-              <View style={styles.classRoomDetailCard}>
-                <Text style={styles.title}>{stats.classroomName}</Text>
-                <View style={styles.creatorCard}>
-                  <Text style={styles.subText}>
-                    Creator: </Text>
-                  <Text style={styles.createdetail}>{stats.creatorName}</Text>
-                </View>
-                <View style={styles.creatorCard}>
-
-                  <Text style={styles.subText}>
-                    Created At:{" "}</Text>
-                  <Text>
-
-                    {stats.createdAt
-                      ? new Date(stats.createdAt * 1000).toLocaleDateString()
-                      : "-"}</Text>
-
-
-                </View>
-              </View>
-
+            <View style={styles.detailCardMobile}>
+              <Text style={styles.titleMobile}>{stats.classroomName}</Text>
+              <Text style={styles.subTextMobile}>
+                Creator: {stats.creatorName}
+              </Text>
+              <Text style={styles.subTextMobile}>
+                Created:{" "}
+                {stats.createdAt
+                  ? new Date(stats.createdAt * 1000).toLocaleDateString()
+                  : "-"}
+              </Text>
             </View>
-          </View>
 
-          <View style={styles.graph1}>
-
-            <View style={styles.LineCard}>
+            <View style={styles.chartCardMobile}>
               <Text style={styles.sectionTitle}>Monthly Progress</Text>
               <LineChart
                 data={lineData}
-                width={960}
-                height={400}
-                yAxisSuffix="%"
-                chartConfig={LineConfig}
+                width={screenWidth - 32}
+                height={220}
+                chartConfig={chartConfig}
                 bezier
               />
             </View>
-            <View style={styles.chartCard}>
-              <Text style={styles.sectionTitle}>Submission Status</Text>
+
+            <View style={styles.chartCardMobile}>
+              <Text style={styles.sectionTitle}>Submission</Text>
               <PieChart
                 data={pieData}
-                width={400}
-                height={220}
+                width={screenWidth - 32}
+                height={200}
                 chartConfig={chartConfig}
                 accessor="population"
                 backgroundColor="transparent"
-                paddingLeft="15"
               />
             </View>
-          </View>
-
-
-          <View style={styles.bottom}>
-            <View style={styles.section}>
+            <View style={styles.sectionMobile}>
               <Text style={styles.sectionTitle}>Recently Published</Text>
-              {tests.length > 0 ? (
-                <FlatList
-                  data={tests}
-                  contentContainerStyle={{ backgroundColor: Colors.bgColor }}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({ item }) => <Test data={item} isDashboard={false} />}
-                />
-              ) : (
-                <Text>No published tests yet</Text>
-              )}
+               
+                <View style={{ width: "100%" }}>
+                  <FlatList
+                    data={tests}
+                    scrollEnabled={false}
+                    keyExtractor={(item, index) => index.toString()}
+                    contentContainerStyle={{ gap: 12 }}
+                    renderItem={({ item }) => (
+                      <View style={{ width: "100%" }}>
+                        <Test data={item} isDashboard />
+                      </View>
+                    )}
+                  />
+                </View>
+              
             </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}> Toppers</Text>
-
-              <View style={styles.topperContainer}>
-                {array.map((item, index) => (
-                  <View key={index} style={styles.topperCard}>
-                    <View style={styles.nameProfile}>
-                      <Text style={styles.profileText}>
-                        {item.name.substring(0, 2).toUpperCase()}
-                      </Text>
-                    </View>
-
-                    <View>
-                      <Text style={styles.topperName}>{item.name}</Text>
-                      <Text style={styles.topperScore}>Score: {item.score}</Text>
-
-                    </View>
-                    <View style={styles.progressIcon}>
-                      <MaterialIcons name="trending-up" size={20} color="green" />
-
-                    </View>
-
+            <View style={styles.sectionMobile}>
+              <Text style={styles.sectionTitle}>Top Performing</Text>
+              {array.map((item, index) => (
+                <View key={index} style={styles.topperCardMobile}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>
+                      {item.name.substring(0, 2).toUpperCase()}
+                    </Text>
                   </View>
-                ))}
 
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.topperName}>{item.name}</Text>
+                    <Text style={styles.topperScore}>
+                      Score: {item.score}
+                    </Text>
+                  </View>
 
+                  <MaterialIcons name="trending-up" size={20} color="green" />
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+
+            <View style={styles.Cards}>
+              <View style={styles.smallCardRow}>
+                <View style={styles.smallCard}>
+                  <MaterialIcons name="assignment" size={34} color={Colors.primaryColor} />
+                  <View style={styles.Count}>
+                    <Text style={styles.cardTitle}>Total Tests</Text>
+                    <Text style={styles.cardNumber}>{states.testCount}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.smallCard}>
+                  <MaterialIcons name="people" size={34} color={Colors.primaryColor} />
+                  <View style={styles.Count}>
+                    <Text style={styles.cardTitle}>Total Students</Text>
+                    <Text style={styles.cardNumber}>{stats.totalStudents}</Text>
+                  </View>
+                </View>
               </View>
 
-
+              <View style={styles.detailCard}>
+                <View style={styles.classroomDeatilTop} />
+                <View style={styles.classRoomDetailCard}>
+                  <Text style={styles.title}>{stats.classroomName}</Text>
+                  <View style={styles.creatorCard}>
+                    <Text style={styles.subText}>Creator:</Text>
+                    <Text>{stats.creatorName}</Text>
+                  </View>
+                  <View style={styles.creatorCard}>
+                    <Text style={styles.subText}>Created:</Text>
+                    <Text>
+                      {stats.createdAt
+                        ? new Date(stats.createdAt * 1000).toLocaleDateString()
+                        : "-"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
             </View>
 
+            <View style={styles.graph1}>
+              <View style={styles.LineCard}>
+                <Text style={styles.sectionTitle}>Monthly Progress</Text>
+                <LineChart
+                  data={lineData}
+                  width={960}
+                  height={400}
+                  chartConfig={chartConfig}
+                  bezier
+                />
+              </View>
 
+              <View style={styles.chartCard}>
+                <Text style={styles.sectionTitle}>Submission Status</Text>
+                <PieChart
+                  data={pieData}
+                  width={400}
+                  height={220}
+                  chartConfig={chartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                />
+              </View>
+            </View>
 
-          </View>
+            <View style={styles.bottom}>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Recently Published</Text>
+                <FlatList
+                  data={tests}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <Test data={item} isDashboard={false} />
+                  )}
+                />
+              </View>
 
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Top Performing</Text>
+                <View style={styles.topperContainerDesktop}>
+                  {array.map((item, index) => (
+                    <View key={index} style={styles.topperCardDesktop}>
+                      <View style={styles.nameProfile}>
+                        <Text style={styles.profileText}>
+                          {item.name.substring(0, 2).toUpperCase()}
+                        </Text>
+                      </View>
 
+                      <View>
+                        <Text style={styles.topperNameDesktop}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.topperScoreDesktop}>
+                          Score: {item.score}
+                        </Text>
+                      </View>
 
-        </ScrollView>
-      </SafeAreaView>
-    </>
+                      <View style={styles.progressIcon}>
+                        <MaterialIcons name="trending-up" size={20} color="green" />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const chartConfig = {
-  backgroundColor: "#fff",
   backgroundGradientFrom: "#fff",
   backgroundGradientTo: "#fff",
   decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
-  labelColor: () => "#333",
-};
-const LineConfig = {
-  backgroundColor: "#fff",
-  backgroundGradientFrom: "#fff",
-  backgroundGradientTo: "#fff",
-  decimalPlaces: 0,
-  color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
+  color: (opacity = 1) => `rgba(33,150,243,${opacity})`,
   labelColor: () => "#333",
 };
 
 const styles = StyleSheet.create({
+
   container: {
     padding: 16,
     backgroundColor: Colors.bgColor,
   },
-  bottom: {
-    flexDirection: "row",
 
+
+  cardRowMobile: {
+    flexDirection: "row",
+    gap: 12,
   },
-  creatorCard: {
+
+  smallCardMobile: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-
+    gap: 10,
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
   },
 
-  classRoomDetailCard: {
-    flexDirection: "column",
+  cardTitleMobile: {
+    fontSize: 13,
+    color: "#666",
+  },
+
+  cardNumberMobile: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  detailCardMobile: {
+    marginTop: 16,
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+
+  titleMobile: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+
+  subTextMobile: {
+    fontSize: 13,
+    color: "#555",
+  },
+
+  chartCardMobile: {
+    marginTop: 16,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+
+  sectionMobile: {
+    marginTop: 18,
+  },
+
+  topperCardMobile: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 100
+    backgroundColor: "#F6F6F8",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+    marginTop: 8,
   },
-  classroomDeatilTop: {
-    height: 120,
-    backgroundColor: "#DFE8FB",
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#E2E8F0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  avatarText: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  topperName: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+
+  topperScore: {
+    fontSize: 12,
+    color: "#555",
+  },
 
 
+  Cards: {
+    width: "100%",
+    gap: 20,
+    flexDirection: "row",
+    height: 150,
   },
-  topperContainer: {
-    marginTop: 10,
-    backgroundColor: Colors.white,
-    padding: 20
-  },
-  progressIcon: {
-    paddingHorizontal: 200
-  },
+
   smallCardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 12,
-  },
-  Count: {
-    paddingLeft: 30
   },
 
   smallCard: {
@@ -318,7 +464,112 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 
-  topperCard: {
+  Count: {
+    paddingLeft: 30,
+  },
+
+  cardTitle: {
+    fontSize: 26,
+    marginTop: 8,
+  },
+
+  cardNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+
+  detailCard: {
+    marginTop: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    width: 560,
+    height: 400,
+  },
+
+  classroomDeatilTop: {
+    height: 120,
+    backgroundColor: "#DFE8FB",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+
+  classRoomDetailCard: {
+    flexDirection: "column",
+    alignItems: "center",
+    marginTop: 100,
+  },
+
+  creatorCard: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  title: {
+    fontSize: 30,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+
+  subText: {
+    fontSize: 20,
+    color: "#555",
+    marginBottom: 4,
+  },
+
+  graph1: {
+    flexDirection: "row",
+  },
+
+  LineCard: {
+    marginTop: 50,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    width: 980,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  chartCard: {
+    marginTop: 280,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    width: 560,
+    height: 300,
+    marginLeft: 25,
+  },
+
+  bottom: {
+    flexDirection: "row",
+    gap: 20,
+  },
+
+  section: {
+    width: 980,
+    marginTop: 25,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+
+  topperContainerDesktop: {
+    marginTop: 10,
+    backgroundColor: Colors.white,
+    padding: 20,
+  },
+
+  topperCardDesktop: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F6F6F8",
@@ -329,7 +580,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     height: 100,
     gap: 20,
-    width: 560
+    width: 560,
   },
 
   nameProfile: {
@@ -345,122 +596,8 @@ const styles = StyleSheet.create({
   profileText: {
     fontWeight: "bold",
     fontSize: 16,
-    fontStyle: fonts.regular
   },
 
-  topperInfo: {
-    paddingVertical: 4,
-  },
-
-  topperName: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-
-  topperScore: {
-    fontSize: 14,
-    marginTop: 10,
-
-  },
-
-
-  cardTitle: {
-    fontSize: 16,
-    marginTop: 8,
-
-  },
-
-  Cards: {
-    width: "100%",
-    gap: 20,
-    flexDirection: "row",
-    height: 150
-
-  },
-  graph1: {
-    flexDirection: "row",
-
-  },
-  cardNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-
-  detailCard: {
-    marginTop: 20,
-    backgroundColor: "#fff",
-    // padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    width: 560,
-    height: 400
-  },
-
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-
-  subText: {
-    fontSize: 20,
-    color: "#555",
-    marginBottom: 4,
-  },
-
-  section: {
-    width: "100%",
-    marginTop: 25,
-    width: 1000,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 22,
-  },
-
-  chartCard: {
-    marginTop: 280,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    // alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#eee",
-    width: 560,
-    height: 300,
-    // marginTop:
-    marginLeft: 25
-  },
-  LineCard: {
-    marginTop: 50,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    width: 980,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  },
-
-  ClassRoomCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F6F6F8",
-    justifyContent: "center",
-    padding: 46,
-    borderRadius: "50%",
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginTop: 10,
-    height: 100,
-    gap: 20,
-    width: 100
-  },
-
+  
 });
+
