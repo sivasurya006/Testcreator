@@ -1,7 +1,7 @@
-import { View, Text, useWindowDimensions, Platform } from 'react-native'
-import React from 'react'
+import { View, Text, useWindowDimensions, Platform, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
 import { Tabs } from 'expo-router'
-import { FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons"
+import { Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, SimpleLineIcons } from "@expo/vector-icons"
 import Colors from '../../../../styles/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClassroomTabBar } from '../../../../src/components/ClassroomTobBar';
@@ -10,11 +10,12 @@ export default function ClassroomLayout() {
 
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 821;
+    const [isTabBarVisible, setIsTabBarVisible] = useState(true);
 
     return (
         // <SafeAreaView style={{ flex: 1 }}>
             <Tabs
-                tabBar={isLargeScreen ? (props) => <ClassroomTabBar {...props} /> : undefined}
+                tabBar={isLargeScreen ? (props) => isTabBarVisible ? <ClassroomTabBar {...props} /> : null : undefined}
                 screenOptions={{
                     tabBarPosition: isLargeScreen ? 'left' : 'bottom',
                     tabBarStyle: Platform.select({
@@ -31,7 +32,22 @@ export default function ClassroomLayout() {
                             backgroundColor: Colors.secondaryColor
                         }
                     }),
-                    headerShown: false,
+                    headerShown: isLargeScreen,
+                    headerStyle: {
+                        backgroundColor: Colors.secondaryColor,
+                    },
+                    headerTintColor: Colors.white,
+                    headerLeft: isLargeScreen ? () => (
+                        <TouchableOpacity onPress={() => setIsTabBarVisible(!isTabBarVisible)} style={{ marginHorizontal: 15 }}>
+                            {
+                                isTabBarVisible ? (
+                                     <SimpleLineIcons name="arrow-left" size={20} color="white"/> 
+                                ) : (
+                                     <Feather name="menu" size={24} color="white" /> 
+                                )
+                            }
+                        </TouchableOpacity>
+                    ) : undefined,
                     tabBarShowLabel: true,
                     tabBarLabelStyle: {
                         fontSize: isLargeScreen ?  16 : 12,
