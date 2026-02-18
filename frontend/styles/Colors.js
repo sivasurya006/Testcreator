@@ -28,5 +28,6 @@ export default {
     shadowColor : '#6C63FF',
     dimBg :  'rgba(0,0,0,0.3)',
     lightBadge : '#EFF6FF',
-    linkColor : "#2563EB"
+    linkColor : "#2563EB",
+    borderColor : '#CAE1FA',
 }

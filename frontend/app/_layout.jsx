@@ -3,15 +3,17 @@ import AuthContextProvider from '../util/AuthContext'
 import { Provider as PaperProvider } from "react-native-paper"
 import { MD3LightTheme } from 'react-native-paper';
 import { useFonts } from 'expo-font';
+import Colors from '../styles/Colors';
 
 const theme = {
     ...MD3LightTheme,
     colors: {
         ...MD3LightTheme.colors,
         onSurface: '#000000',          // menu text
-        onSurfaceVariant: '#000000',   // menu secondary text
+        onSurfaceVariant: 'gray',   // menu secondary text
         surface: '#ffffff',            // modal bg
-
+        primary : Colors.primaryColor
+        
     },
 };
 

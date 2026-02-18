@@ -15,7 +15,7 @@ public class Queries {
 	public static final String selectClassroomTutors = "select u.user_id , u.name , u.email , u.registered_at  , cu.joined_at  from Users u join Classroom_Users cu on  u.user_id = cu.user_id where cu.classroom_id = ? and cu.role = 'tutor'";
 	public static final String selectCreatedClassrooms  = "select c.* , count(distinct t.test_id) as total_tests , count(distinct cu.user_id) as total_students from Classrooms c left join Tests t on t.classroom_id = c.classroom_id and t.status = 'published' left join Classroom_Users cu on cu.classroom_id = c.classroom_id and cu.role = 'student'  where created_by = ? group by  c.classroom_id";
 	
-	public static final String selectJoinedClassrooms = "select c.* , cu.joined_at , count(distinct t.test_id) as total_published , count(distinct a.test_id) as total_attempted from Classrooms c join Classroom_Users cu on c.classroom_id = cu.classroom_id left join Tests t on t.classroom_id = c.classroom_id and t.status = 'published' left join Attempts a on a.test_id = t.test_id where cu.user_id = ? and cu.role = 'student' group by c.classroom_id";
+	public static final String selectJoinedClassrooms = "select c.* , cu.joined_at , count(distinct t.test_id) as total_published , count(distinct a.test_id) as total_attempted from Classrooms c join Classroom_Users cu on c.classroom_id = cu.classroom_id left join Tests t on t.classroom_id = c.classroom_id and t.status = 'published' left join Attempts a on a.test_id = t.test_id and a.user_id = cu.user_id  where cu.user_id = ? and cu.role = 'student' group by c.classroom_id;";
 	
 	public static final String selectClassroomCreatedAt = "select created_at from Classrooms where classroom_id = ?";
 	public static final String selectClassroomByCreatedByAndClassroomId = "select * from Classrooms where classroom_id = ? and created_by = ?";
@@ -72,7 +72,7 @@ public class Queries {
 	
 	// Create new Question
 	public static final String insertQuestion = "insert into Questions (test_id,type,question_text,marks) values (?,?,?,?)"; 
-	public static final String insertOption = "insert into Options (question_id,option_text,is_correct,option_mark) values (?,?,?,?)";
+	public static final String insertOption = "insert into Options (question_id,option_text,is_correct,option_mark,properties) values (?,?,?,?,?)";
 	
 	
 	// Read Questions 
@@ -88,7 +88,7 @@ public class Queries {
 	public static final String updateQuestion = "update Questions set question_text = ? , type = ? , marks = ? where question_id = ?";
 	public static final String getAllQuestionsWithOptions = "select * from Questions q left join Options o on q.question_id = o.question_id where q.test_id = ?";
 	
-	public static final String updateOptions = "update Options set option_text = ?, is_correct = ? , option_mark = ? where option_id = ?";
+	public static final String updateOptions = "update Options set option_text = ?, is_correct = ? , option_mark = ? , properties = ? where option_id = ?";
 	
 	/* ============ Classroom users ===============*/
 	

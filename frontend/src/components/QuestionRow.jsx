@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
 import { IconButton, Modal, Portal } from 'react-native-paper'
 import api from '../../util/api';
 import { use, useState } from 'react';
@@ -6,20 +6,23 @@ import { useGlobalSearchParams } from 'expo-router';
 import ConfirmModal from './modals/ConfirmModal';
 import QuestionEditor from './QuestionEditor';
 import { AppBoldText } from '../../styles/fonts';
+import RenderHTML from 'react-native-render-html';
 
 export default function QuestionRow({ question, questionNumber, setAllTestQuestions, allQuestions }) {
 
     const { classroomId } = useGlobalSearchParams();
+    const { width } = useWindowDimensions();
 
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [isEditModalVisible, setEditModalVisible] = useState(false);
-    const [ defaultQuestionDetails, setDefaultQuestionDetails] = useState(null);
+    const [defaultQuestionDetails, setDefaultQuestionDetails] = useState(null);
 
     const closeEditModal = () => setEditModalVisible(false);
 
     async function handleEdit() {
-        console.log(classroomId,question.questionId)
+        console.log(classroomId, question.questionId)
         const details = await getQuestionDetails(classroomId, question.questionId);
+        console.log("details ", details)
         if (details) {
             setDefaultQuestionDetails(details);
             setEditModalVisible(true);
@@ -29,10 +32,16 @@ export default function QuestionRow({ question, questionNumber, setAllTestQuesti
 
 
     async function editQuestionHandler(question) {
+
+        console.log("Handler ==================================================== : ", question)
+
         const success = await editQuestion(makeQuestionPayload(question), classroomId, question.question.questionId);
         if (success) {
             setAllTestQuestions(allQuestions.map(q => {
                 if (q.question.questionId == question.question.questionId) {
+
+                    console.log("Question for update ", q.question.marks)
+
                     q.question = {
                         ...q.question,
                         questionText: question.question.questionText,
@@ -55,12 +64,18 @@ export default function QuestionRow({ question, questionNumber, setAllTestQuesti
 
     return (
         <View style={styles.questionRow}>
-            <AppBoldText style={styles.questionText}>
+            <View style={styles.questionContent}>
                 <Text style={styles.questionNumber}>
                     {`Q${questionNumber}.  `}
                 </Text>
-                {question.questionText}
-            </AppBoldText>
+                <View style={{ flex: 1 }}>
+                    <RenderHTML
+                        contentWidth={width - 100}
+                        source={{ html: question.questionText }}
+                        baseStyle={styles.htmlText}
+                    />
+                </View>
+            </View>
 
             <View style={styles.toolsRow}>
                 <IconButton icon="pencil" size={18} onPress={handleEdit} />
@@ -82,18 +97,18 @@ export default function QuestionRow({ question, questionNumber, setAllTestQuesti
                 ) : null
             }
             {
-                    <Portal>
-                        <Modal
-                            visible={isEditModalVisible}
-                            transparent
-                            animationType='fade'
-                            onRequestClose={closeEditModal}
-                            onDismiss={closeEditModal}
-                        >
-                            <QuestionEditor mode={'editQuestion'} defaultQuestion={defaultQuestionDetails}  onCancel={closeEditModal} onConfirm={editQuestionHandler} />
-                        </Modal>
-                    </Portal>
-                
+                <Portal>
+                    <Modal
+                        visible={isEditModalVisible}
+                        transparent
+                        animationType='fade'
+                        onRequestClose={closeEditModal}
+                        onDismiss={closeEditModal}
+                    >
+                        <QuestionEditor mode={'editQuestion'} defaultQuestion={defaultQuestionDetails} onCancel={closeEditModal} onConfirm={editQuestionHandler} />
+                    </Modal>
+                </Portal>
+
             }
 
         </View>
@@ -122,8 +137,8 @@ async function deleteQuestion(classroomId, questionId, allQuestions, setAllTestQ
     }
 }
 
-async  function  editQuestion(question,classroomId, questionId) {
-    try{
+async function editQuestion(question, classroomId, questionId) {
+    try {
         const response = await api.patch(`/api/tests/updateQuestion`, {
             ...question
         }, {
@@ -161,16 +176,16 @@ async function getQuestionDetails(classroomId, questionId) {
             console.error('Failed to fetch question details');
         }
     } catch (error) {
-        console.error( error);
+        console.error(error);
     }
     return null;
 }
 
 
 function makeQuestionPayload(input) {
-    console.log('Input ',input)
+    console.log('Input ', input)
     return {
-        id : input.question.questionId,
+        id: input.question.questionId,
         marks: Number(input.question.marks),
         questionText: input.question.questionText,
         type: input.questionType,
@@ -178,7 +193,13 @@ function makeQuestionPayload(input) {
             optionId: opt.optionId,
             optionText: opt.optionText,
             correct: opt.correct ? true : false,
-            optionMark: opt.optionMark ? Number(opt.optionMark) : 0
+            optionMark: opt.optionMark ? Number(opt.optionMark) : 0,
+            ...(opt.blankOptionProperties ? {
+                blankOptionProperties: { ...opt.blankOptionProperties }
+            } : {}),
+            ...(opt.matchingOptionProperties ? {
+                matchingOptionProperties : { ...opt.matchingOptionProperties }
+            } : {})
         }))
     };
 }
@@ -190,14 +211,26 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         marginBottom: 12,
     },
+    questionContent: {
+        flexDirection: 'row',
+        flex: 1,
+        alignItems: 'flex-start',
+    },
     questionNumber: {
         fontWeight: '700',
+        fontSize: 18,
+        marginRight: 8,
+        minWidth: 40,
     },
     questionText: {
         fontSize: 18,
         fontWeight: '600',
         flex: 1,
         marginRight: 8,
+    },
+    htmlText: {
+        fontSize: 18,
+        // fontWeight: '600',
     },
     toolsRow: {
         flexDirection: 'row',
