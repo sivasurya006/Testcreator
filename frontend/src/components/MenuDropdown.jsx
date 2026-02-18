@@ -7,9 +7,11 @@ import {
   Pressable,
   useWindowDimensions,
 } from 'react-native';
-import { Menu } from 'react-native-paper';
+import { Icon, Menu } from 'react-native-paper';
+import { AppMediumText, AppRegularText, AppSemiBoldText } from '../../styles/fonts';
+import Colors from '../../styles/Colors';
 
-export default function MenuDropdown({options,backgroundColor,selected,setSelected}) {
+export default function MenuDropdown({ options, backgroundColor, selected, setSelected }) {
   const [visible, setVisible] = useState(false);
   const { width } = useWindowDimensions();
 
@@ -30,18 +32,18 @@ export default function MenuDropdown({options,backgroundColor,selected,setSelect
           style={{ width: dropdownWidth }}
         >
           <View style={styles.dropdownContent}>
-            <Text
+            <AppMediumText
               style={styles.dropdownText}
               numberOfLines={2}
               ellipsizeMode="tail"
             >
               {selected ? selected.optionText : 'Select an option'}
-            </Text>
+            </AppMediumText>
 
             <Ionicons
               name={visible ? 'chevron-up' : 'chevron-down'}
               size={20}
-              color="black"
+              color={'black'}
             />
           </View>
         </Pressable>
@@ -58,7 +60,13 @@ export default function MenuDropdown({options,backgroundColor,selected,setSelect
             setVisible(false);
           }}
           titleStyle={styles.menuItemText}
-          leadingIcon={selected === opt ? 'check-circle' : 'circle-outline'}
+          leadingIcon={({ size }) => (
+            <Icon
+              source={selected === opt ? 'check-circle' : 'circle-outline'}
+              size={size}
+              color={selected === opt ? Colors.primaryColor : '#999'}
+            />
+          )}
         />
       ))}
     </Menu>
@@ -71,7 +79,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderWidth: 1,
-    borderColor: 'gray',
+    borderColor: Colors.borderColor,
     borderRadius: 8,
     gap: 8,
   },

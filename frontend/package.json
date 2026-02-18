@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "-": "^0.0.1",
+    "@ckeditor/ckeditor5-build-classic": "^39.0.2",
+    "@ckeditor/ckeditor5-react": "^11.0.1",
     "@expo/vector-icons": "^15.0.3",
     "@lottiefiles/dotlottie-react": "^0.13.5",
     "@react-native-masked-view/masked-view": "0.3.2",
@@ -43,7 +45,9 @@
     "react-native-ios-utilities": "^5.1.2",
     "react-native-paper": "^5.14.5",
     "react-native-paper-dropdown": "^2.3.1",
+    "react-native-pell-rich-editor": "^1.10.0",
     "react-native-reanimated": "~4.1.1",
+    "react-native-render-html": "^6.3.4",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",

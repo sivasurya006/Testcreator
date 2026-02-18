@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.interceptor.ServletRequestAware;
 
+import com.google.gson.JsonObject;
 import com.opensymphony.xwork2.ModelDriven;
 import com.testcreator.dto.ApiError;
 import com.testcreator.dto.QuestionDto;
@@ -18,7 +19,9 @@ import com.testcreator.exception.QuestionNotFoundException;
 import com.testcreator.exception.UnauthorizedException;
 import com.testcreator.model.Context;
 import com.testcreator.model.Option;
+import com.testcreator.model.OptionProperties;
 import com.testcreator.model.Permission;
+import com.testcreator.model.QuestionType;
 import com.testcreator.model.TestStatus;
 import com.testcreator.service.AccessService;
 import com.testcreator.service.TestService;
@@ -135,8 +138,11 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 		if (questionDto.getType() == null) {
 			addFieldError("type", "Invalid question type");
+			return;
 		}
+	
 
+		QuestionType type = questionDto.getType();
 		if (questionDto.getOptions() != null) {
 			for (Option option : questionDto.getOptions()) {
 				if (option.getOptionId() < 0) {
@@ -147,6 +153,23 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 				}
 				if (option.getOptionMark() < 0) {
 					addFieldError("options.optionMark", "Invalid option mark");
+				}
+				if(type == QuestionType.FILL_BLANK || type == QuestionType.MATCHING) {
+					option.setOptionProperties(type);
+					if(option.getOptionProperties() == null || option.getOptionProperties().getProperties() == null) {
+						addFieldError("options.optionProperties", "Invalid option Properties");
+						return;
+					}else if(type == QuestionType.FILL_BLANK){
+						JsonObject props = option.getOptionProperties().getProperties();
+						if(props.get("blankIdx") == null) {
+							addFieldError("options.optionProperties", "Invalid option index");
+						}
+					}else {
+						JsonObject props = option.getOptionProperties().getProperties();
+						if(props.get("match").isJsonNull() || props.get("match").toString().isBlank()) {
+							addFieldError("options.optionProperties", "Invalid option match");
+						}
+					}
 				}
 			}
 		}
@@ -408,6 +431,9 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 
 	public void validateUpdateQuestion() {
 		System.out.println("validate called");
+		
+		System.out.println("Type : "+questionDto.getType());
+		
 		if (questionDto == null || questionDto.getQuestionText() == null || questionDto.getQuestionText().isBlank()) {
 			addFieldError("questionText", "Invalid question text");
 			System.out.println("qu txt error");
@@ -430,6 +456,8 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 		if (questionDto.getOptions() != null) {
 			
 			for (Option option : questionDto.getOptions()) {
+				
+				option.setOptionProperties(questionDto.getType());
 
 				if (option.getOptionId() < 0) {
 					addFieldError("options.optionId", "Invalid option id");
@@ -460,6 +488,7 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 			context.setClasssroomId(classroomId);
 			context.setUserId(userId);
 			new AccessService().require(Permission.CLASSROOM_TUTOR, context);
+			System.out.println("Incomming : "+questionDto);
 			boolean updated = testService.updateQuestion(context, questionDto);
 			if (updated) {
 				this.successDto = new SuccessDto("Question successfully updated", 200, updated);

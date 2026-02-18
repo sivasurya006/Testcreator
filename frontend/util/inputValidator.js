@@ -19,7 +19,8 @@ function hasSequentialDigits(password) {
 
 export function isStrongPassword(password){
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()-+]).{8,}$/
-    return regex.test(password) && !hasSequentialDigits(password);
+    return regex.test(password);
+    //  && !hasSequentialDigits(password);
 }
 
 export function isValidName(name){

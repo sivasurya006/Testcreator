@@ -3,6 +3,7 @@ package com.testcreator.dto;
 import com.testcreator.model.QuestionType;
 import java.util.List;
 import com.testcreator.model.Option;
+import com.testcreator.model.OptionProperties;
 
 public class QuestionDto {
 	private int id;
@@ -12,6 +13,7 @@ public class QuestionDto {
 	private List<Option> options;
 	private String testTitle;
 	private TestDto test;
+	
 
 	public List<Option> getOptions() {
 		return options;
@@ -76,7 +78,6 @@ public class QuestionDto {
 	public void setQuestionText(String questionText) {
 		this.questionText = questionText;
 	}
-
 
 
 	@Override

@@ -1,19 +1,23 @@
-import { View, Text, StyleSheet, Modal, Button, ScrollView, useWindowDimensions, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Modal, Button, ScrollView, useWindowDimensions, Pressable, Platform } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import Colors from '../../styles/Colors'
 import LabeledInput from './LabledInput'
 import LabeledTextArea from './LabledTextArea'
 import MenuDropdown from './MenuDropdown'
-import { BooleanComponent, FillBlankComponent, MCQComponent, SingleComponent } from './OptionComponents';
+import { BooleanComponent, FillBlankComponent, MatchingComponents, MCQComponent, SingleComponent } from './OptionComponents';
 import { Checkbox } from 'react-native-paper'
+import { AppBoldText, AppMediumText, AppRegularText, AppSemiBoldText } from '../../styles/fonts'
+import { AntDesign } from '@expo/vector-icons'
+import { type } from 'node:os'
+import MatchingQuestion from './MatchingQuestion'
 
 
 const options = [
     { optionText: 'Multi choice options', value: 'MCQ' },
     { optionText: 'Single choice', value: 'SINGLE' },
     { optionText: 'True / False', value: 'BOOLEAN' },
-    // { optionText: 'Fill in the blanks', value: "FILL_BLANKS" },
-    // { optionText: 'Matching', value: "MATCHING" }
+    { optionText: 'Fill in the blanks', value: "FILL_BLANK" },
+    { optionText: 'Matching', value: "MATCHING" }
 ]
 
 function getOptionIndex(type) {
@@ -38,7 +42,7 @@ function getOptionIndex(type) {
 
 export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuestion }) {
 
-    console.log('default question ', defaultQuestion)
+    // console.log('default question ', defaultQuestion)
 
     const [giveOptionMarks, setGiveOptionMarks] = useState(false);
     const [selectedType, setSelectedType] = useState(mode === 'editQuestion' ?
@@ -47,16 +51,58 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
     const [questionMark, setQuestionMark] = useState(0);
     const [questionOptions, setQuestionOptions] = useState([]);
     const [error, setError] = useState("");
+    const [textParts, setTextParts] = useState([]);
 
-    useEffect(()=>{
+
+    console.log("==============> " +questionText)
+
+    useEffect(() => {
+        setQuestionText('');
+    }, [selectedType])
+
+    useEffect(() => {
         if (defaultQuestion && defaultQuestion.options && defaultQuestion.options.length > 0) {
-            setGiveOptionMarks(defaultQuestion.options.some(opt => opt.optionMark && opt.optionMark > 0)); 
+            setGiveOptionMarks(defaultQuestion.options.some(opt => opt.optionMark && opt.optionMark > 0));
             setQuestionMark(defaultQuestion.marks);
-            setQuestionText(defaultQuestion.questionText)
+            setQuestionText(defaultQuestion.questionText);
+            if (defaultQuestion.type == "FILL_BLANK") {
+                setTextParts(convertFillBlank(defaultQuestion))
+                console.log("Setting text parts ", defaultQuestion.id)
+            }
         }
-    },[])
+    }, []);
 
-    console.log(selectedType)
+    const addNewTextPart = () => {
+        if (textParts[textParts.length - 1].type == 'text') {
+            setError("Already a textPart added lastly.")
+            setTimeout(() => {
+                setError("")
+            }, 3000)
+            return
+        }
+        setTextParts([...textParts, { type: 'text', value: "" }])
+
+    }
+
+    const addNewBlankPart = () => {
+        if (textParts[textParts.length - 1].type == 'blank') {
+            setError("Already a Blank added lastly.")
+            setTimeout(() => {
+                setError("")
+            }, 3000)
+            return
+        }
+        setQuestionText(questionText + "__BLANK__")
+        setTextParts([...textParts, {
+            type: 'blank', value: "", idx: textParts.reduce((sum, tp) => {
+                if (tp.type == 'blank') {
+                    return sum + 1;
+                }
+                return sum
+            }, 0) + 1, blankMark: 0, isCaseSensitive: false
+        }])
+    }
+
 
     const { width } = useWindowDimensions();
     function validateInput() {
@@ -73,11 +119,11 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
             setError("At least one correct option must be selected for MCQ and Single choice questions");
             return false;
         }
-        if (questionOptions.find(opt => opt.correct) === undefined) {
+        if (selectedType.value != 'MATCHING' && selectedType.value != 'FILL_BLANK' && questionOptions.find(opt => opt.correct) === undefined) {
             setError("At least one correct option must be selected");
             return false;
         }
-        if (questionOptions.find(opt => opt.correct).optionText.trim() === "") {
+        if (selectedType.value != 'MATCHING' && selectedType.value != 'FILL_BLANK' && questionOptions.find(opt => opt.correct).optionText.trim() === "") {
             setError("Correct option text cannot be empty");
             return false;
         }
@@ -88,38 +134,57 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
         return true;
     }
 
+    console.log(textParts)
+
     const isEditMode = mode === 'editQuestion';
     defaultQuestion = isEditMode ? defaultQuestion : {};
     return (
         <View style={[styles.modalContainer, width > 861 && { maxWidth: 800, margin: 'auto', width: '100%' }]}>
             <View style={styles.modalContent}>
-
-
                 <View style={styles.modalHeader}>
-                    <Text style={styles.modalHeadText} >{isEditMode ? 'Edit ' : "New "} Question</Text>
+                    <AntDesign name='question-circle' size={24} color={Colors.primaryColor} />
+                    <AppBoldText style={styles.modalHeadText} >{isEditMode ? 'Edit ' : "New "} Question</AppBoldText>
                 </View>
                 <View>
                     <View style={styles.questionTypeModal} >
                         <View style={{ justifyContent: 'space-between', flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                            <View>
-                                <MenuDropdown options={options} backgroundColor={Colors.white} selected={selectedType} setSelected={setSelectedType} />
+                            <View style={{ gap: 10 }}>
+                                <AppSemiBoldText style={{ fontSize: 16 }} >Question type</AppSemiBoldText>
+                                <MenuDropdown options={options} backgroundColor={Colors.bgColor} selected={selectedType} setSelected={setSelectedType} />
                             </View>
-                            <LabeledInput onChangeText={setQuestionMark} label={'Marks : '} placeholder={'0'}
+                            <LabeledInput onChangeText={setQuestionMark} label={'Marks'} placeholder={'0'}
                                 customInputStyles={{ width: 50 }}
                                 inputType={'numeric'}
                                 defaultValue={isEditMode ? String(defaultQuestion.marks) : "0"}
                             />
                         </View>
                     </View>
-                    <View>
-                        <LabeledTextArea onChangeText={setQuestionText} placeholder={'Type here'} label={'Question : '}
-                            defaultValue={isEditMode ? defaultQuestion.questionText : ""}
-                            isFillBlank={selectedType.value === 'FILL_BLANKS'} />
+                    <View style={{ marginVertical: 10 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <AppSemiBoldText style={{ fontSize: 14 }} >Question prompt</AppSemiBoldText>
+                            {selectedType.value === 'FILL_BLANK' && (
+                                <View style={{ flexDirection: 'row', gap: 20 }}>
+                                    <Pressable style={styles.addBlankBtn} onPress={addNewTextPart} >
+                                        <AppRegularText style={{ color: Colors.white, fontWeight: '600' }}>+  Add TextPart</AppRegularText>
+                                    </Pressable>
+                                    <Pressable style={styles.addBlankBtn} onPress={addNewBlankPart} >
+                                        <AppRegularText style={{ color: Colors.white, fontWeight: '600' }}>+  Add Blank</AppRegularText>
+                                    </Pressable>
+                                </View>
+                            )
+                            }
+                        </View>
+                        {
+                            selectedType.value != 'FILL_BLANK' && (
+                                <LabeledTextArea onChangeText={setQuestionText} placeholder={'Type here'} label={''}
+                                    defaultValue={isEditMode ? defaultQuestion.questionText : questionText} />
+                            )
+                        }
                     </View>
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: 30 }}
-                        style={{ marginVertical: 10, maxHeight: 200 }}
+                        style={{ marginVertical: 10, maxHeight: selectedType.value == "FILL_BLANK" ? 400 : 250 }}
                     >
                         {
                             (() => {
@@ -130,16 +195,21 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                                         );
                                     case 'SINGLE':
                                         return (
-                                            <SingleComponent  defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                            <SingleComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
                                         );
                                     case 'BOOLEAN':
                                         return (
                                             <BooleanComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
                                         );
-                                    default:
+                                    case 'FILL_BLANK':
                                         return (
-                                            <FillBlankComponent defaultOptions={defaultQuestion.options}  options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                            // <AppBoldText>Fill Blank</AppBoldText>
+                                            <FillBlankComponent giveOptionMarks={giveOptionMarks} textParts={textParts} setTextParts={setTextParts} defaultTextParts={convertFillBlank(defaultQuestion)} questionText={questionText} setQuestionText={setQuestionText} />
                                         );
+                                    default :
+                                        return (
+                                            <MatchingComponents defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                        )
                                 }
                             })()
                         }
@@ -157,23 +227,23 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                     {
                         error !== "" && (
                             <View>
-                                <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>
+                                <AppSemiBoldText style={{ color: 'red', textAlign: 'center' }}>{error}</AppSemiBoldText>
                             </View>
                         )
                     }
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 20, alignItems: 'center' }}>
                         <Pressable style={styles.cancelBtn} onPress={onCancel} >
-                            <Text>Cancel</Text>
+                            <AppRegularText>Cancel</AppRegularText>
                         </Pressable>
 
                         <Pressable style={styles.addBtn} onPress={() => {
-                            if (validateInput()) {
+                            if (selectedType.value != "FILL_BLANK" && validateInput()) {
                                 onConfirm({
                                     question: {
                                         questionText,
                                         marks: questionMark,
                                         ...(isEditMode && {
-                                            questionId : defaultQuestion.id
+                                            questionId: defaultQuestion.id
                                         })
                                     },
                                     questionType: selectedType.value,
@@ -181,9 +251,22 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                                 })
                                 onCancel();
                             }
+                            if (selectedType.value == 'FILL_BLANK') {
+
+                                const questions = { ...makeBlankQuestionPayloadForUpdate(questionMark, textParts) };
+
+                                onConfirm(isEditMode ? {
+                                    ...questions,
+                                    question: {
+                                        ...questions.question,
+                                        questionId: defaultQuestion.id
+                                    }
+                                } : makeBlankQuestionPayload(questionMark, textParts), false)
+                                onCancel();
+                            }
                         }
                         }>
-                            <Text style={{ color: Colors.white }}>{isEditMode ? 'Update ' : 'Add '} Question</Text>
+                            <AppRegularText style={{ color: Colors.white }}>{isEditMode ? 'Update ' : 'Add '} Question</AppRegularText>
                         </Pressable>
                     </View>
                 </View>
@@ -196,21 +279,151 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
 }
 
 
+
+
+
+// {
+//     "marks": 0,
+//     "questionText": "<p>New Question</p>",
+//     "type": "FILL_BLANK",
+//     "options": [
+//         {
+//             "optionText": "opt 1",
+//             "correct": true,
+//             "optionMark": 0,
+//             "blankOptionProperties" : {
+//                 "blankIdx" : 1,
+//                 "isCaseSensitive" : false
+//             }
+//         },
+//         {
+//             "optionText": "opt2 ",
+//             "correct": false,
+//             "optionMark": 0,
+//             "blankOptionProperties" : {
+//                 "blankIdx" : 2,
+//                 "isCaseSensitive" : false
+//             }
+//         }
+//     ]
+// }
+
+function makeBlankQuestionPayload(mark, input) {
+
+    const isLastIndexNeed = input[input.length - 1].type === "blank"
+
+    console.log(" part.blankMark ", mark)
+
+    const payload = {
+        "marks": mark ? mark : 0,
+        "questionText": input.filter(part => part.type == "text").map(part => part.value).join("__BLANK__"),
+        "type": "FILL_BLANK",
+        "options": input.filter(part => part.type == "blank").map(part => {
+            return {
+                "optionText": part.value,
+                "optionMark": part.blankMark ? part.blankMark : 0,
+                "blankOptionProperties": {
+                    "blankIdx": part.idx,
+                    "isCaseSensitive": part.isCaseSensitive
+                }
+            }
+        })
+    }
+
+    if (isLastIndexNeed) {
+        payload.questionText += "__BLANK__"
+    }
+    return payload
+}
+
+function makeBlankQuestionPayloadForUpdate(mark, input) {
+
+    const isLastIndexNeed = input[input.length - 1].type === "blank"
+
+    console.log(" part.blankMark ", mark)
+
+    const payload = {
+        question: {
+            "marks": mark ? mark : 0,
+            "questionText": input.filter(part => part.type == "text").map(part => part.value).join("__BLANK__"),
+        },
+        "options": input.filter(part => part.type == "blank").map(part => {
+            return {
+                "optionText": part.value,
+                "optionMark": part.blankMark ? part.blankMark : 0,
+                "optionId": part.optionId,
+                "blankOptionProperties": {
+                    "blankIdx": part.idx,
+                    "isCaseSensitive": part.isCaseSensitive
+                }
+            }
+        }),
+        "questionType": "FILL_BLANK",
+    }
+
+    if (isLastIndexNeed) {
+        payload.question.questionText += "__BLANK__"
+    }
+    return payload
+}
+
+function convertFillBlank(question) {
+    if (question.type !== "FILL_BLANK") return [];
+
+    const textParts = question.questionText.split("__BLANK__");
+    const blanks = question.options;
+
+    const result = [];
+
+    for (let i = 0; i < textParts.length; i++) {
+        if (textParts[i].trim() !== "" || i === 0) {
+            result.push({
+                type: "text",
+                value: textParts[i]
+            });
+        }
+
+        if (i < blanks.length) {
+            const blankOption = blanks[i];
+            const isCaseSensitive = blankOption.blankOptionProperties?.isCaseSensitive || false;
+            const idx = blankOption.blankOptionProperties?.blankIdx || (i + 1);
+
+            result.push({
+                type: "blank",
+                value: blankOption.optionText,
+                idx: idx,
+                blankMark: blankOption.optionMark || 0,
+                isCaseSensitive: isCaseSensitive,
+                optionId: blankOption.optionId
+            });
+        }
+    }
+
+    return result;
+}
+
+
 const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: 'white',
         borderRadius: 8,
         padding: 20,
         elevation: 6,
+        gap: 20,
+        // alignSelf : 'center'
     },
     modalHeader: {
         paddingBottom: 10,
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
+        borderBottomColor: Colors.borderColor,
         marginBottom: 10,
+        flexDirection: 'row',
+        gap: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     modalHeadText: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: '600',
     },
     questionTypeModal: {
@@ -233,6 +446,13 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 5,
         width: 170,
+        alignItems: 'center',
+    },
+    addBlankBtn: {
+        backgroundColor: Colors.primaryColor,
+        padding: 8,
+        paddingHorizontal: 12,
+        borderRadius: 5,
         alignItems: 'center',
     },
 });

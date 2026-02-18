@@ -8,6 +8,8 @@ import McqQuestion from '../../../../../../src/components/McqQuestion';
 import BooleanQuestion from '../../../../../../src/components/BooleanQuestion';
 import api from '../../../../../../util/api';
 import { useGlobalSearchParams } from 'expo-router';
+import FillInBlankQuestion from '../../../../../../src/components/FillIntheBlankQuestion';
+import MatchingQuestion from '../../../../../../src/components/MatchingQuestion';
 
 
 // {
@@ -41,25 +43,25 @@ export default function Edit() {
     const openAddQuesModal = () => setAddQuesModalVisible(true);
     const closeAddQuesModal = () => setAddQuesModalVisible(false);
 
-    async function addQuestion(question) {
+    async function addQuestion(question, constructPayload = true) {
         console.log('question to add ', question)
-        console.log("maked : ",makeQuestionPayload(question))
-        const newQuestion = await createNewQuestion(makeQuestionPayload(question), classroomId, testId);
+        const newQuestion = await createNewQuestion(constructPayload ? makeQuestionPayload(question) : question, classroomId, testId);
         console.log(newQuestion)
         if (!newQuestion) return;
         setAllQuestions([...allQuestions, makeResultToQuestion(newQuestion)]);
     }
 
     useEffect(() => {
-        if(!testId) return
+        if (!testId) return
         const fetchQuestions = async function () {
             const questions = await getAllTestQuestion(classroomId, testId);
+            // console.log( makeResultToQuestion(questions[questions.length-1]))
             setAllQuestions(questions.map(ques => makeResultToQuestion(ques)));
         }
         if (testId) {
             fetchQuestions();
         }
-    }, [classroomId,testId]);
+    }, [classroomId, testId]);
 
     return (
         <View style={styles.container}>
@@ -76,6 +78,7 @@ export default function Edit() {
                             data={allQuestions}
                             keyExtractor={(item, index) => index}
                             renderItem={({ item, index }) => {
+                                // console.log(item.questionType)
                                 switch (item.questionType) {
                                     case 'SINGLE':
                                         return (
@@ -111,6 +114,30 @@ export default function Edit() {
                                             />
                                         )
                                     }
+                                    case "FILL_BLANK": {
+                                        return (
+                                            <FillInBlankQuestion
+                                                mode="edit"
+                                                question={item.question}
+                                                options={item.options}
+                                                questionNumber={index + 1}
+                                                setAllQuestions={setAllQuestions}
+                                                allQuestions={allQuestions}
+                                            />
+                                        )
+                                    }
+                                    case "MATCHING": {
+                                        return (
+                                            <MatchingQuestion
+                                                mode="edit"
+                                                question={item.question}
+                                                options={item.options}
+                                                questionNumber={index + 1}
+                                                setAllQuestions={setAllQuestions}
+                                                allQuestions={allQuestions}
+                                            />
+                                        )
+                                    }
                                     default:
                                         return null;
                                 }
@@ -120,7 +147,7 @@ export default function Edit() {
                     )
                 }
                 <Pressable
-                    style={[styles.addNew , hovered && styles.hovered]}
+                    style={[styles.addNew, hovered && styles.hovered]}
                     onPress={openAddQuesModal}
                     onHoverIn={() => setHovered(true)}
                     onHoverOut={() => setHovered(false)}
@@ -151,13 +178,13 @@ export default function Edit() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor : Colors.bgColor,
+        backgroundColor: Colors.bgColor,
     },
     questionPaper: {
         backgroundColor: Colors.bgColor,
         flex: 1,
         // width: "100%",
-        paddingTop : 10,
+        paddingTop: 10,
     },
     addNew: {
         position: 'absolute',
@@ -207,7 +234,6 @@ async function getAllTestQuestion(classroomId, testId) {
         return [];
     }
 }
-
 function makeResultToQuestion(result) {
     return {
         question: {
@@ -216,12 +242,25 @@ function makeResultToQuestion(result) {
             marks: String(result.marks)
         },
         questionType: result.type,
-        options: result.options.map(opt => ({
-            optionId: opt.optionId,
-            optionText: opt.optionText,
-            isCorrect: opt.correct ? true : false,
-            mark: opt.optionMark ? String(opt.optionMark) : ""
-        }))
+        options: result.options.map(opt => {
+            const option = {
+                optionId: opt.optionId,
+                optionText: opt.optionText,
+                isCorrect: !!opt.correct,
+                mark: opt.optionMark ? String(opt.optionMark) : ""
+            };
+            if (result.type === "FILL_BLANK" && opt.blankOptionProperties) {
+                option.blankOptionProperties = opt.blankOptionProperties;
+                // console.log("setting option properties ",option)
+            }
+
+            if (result.type === "MATCHING" && opt.matchingOptionProperties) {
+                option.matchingOptionProperties = opt.matchingOptionProperties;
+                // console.log("setting option properties ",option)
+            }
+
+            return option;
+        })
     };
 }
 
@@ -249,7 +288,7 @@ async function createNewQuestion(question, classroomId, testId) {
 
 function makeQuestionPayload(input) {
 
-    console.log('payload inp : ',input)
+    console.log('payload inp : ', input)
 
     const payload = {
         marks: Number(input.question.marks),
@@ -257,10 +296,20 @@ function makeQuestionPayload(input) {
         type: input.questionType,
         options: input.options.map((opt) => ({
             optionText: opt.optionText,
-            correct: opt.correct ? true : false,
-            optionMark: opt.optionMark ? Number(opt.optionMark) : 0
+            optionMark: opt.optionMark ? Number(opt.optionMark) : 0,
+            ...(input.questionType === 'MATCHING'
+                ? {
+                    matchingOptionProperties: {
+                        ...opt.matchingOptionProperties
+                    }
+                }
+                : {
+                    correct: !!opt.correct
+                })
         }))
     };
+
+
 
     return payload
 }

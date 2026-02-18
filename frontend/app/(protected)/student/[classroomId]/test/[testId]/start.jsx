@@ -209,11 +209,13 @@ const styles = StyleSheet.create({
 })
 
 function makePayload(input) {
+
   const payload = { answers: [] };
   Object.entries(input).forEach(([key, value]) => {
     payload.answers.push({
-      questionId: parseInt(key, 10),
-      options: Array.isArray(value) ? value : [value]
+      questionId: parseInt(key),
+      options: Array.isArray(value) ? value.map(opt => { return { optionId : opt.optionId } }) : [value].map(opt => { return { optionId : opt.optionId } })
+
     });
   });
   return payload;

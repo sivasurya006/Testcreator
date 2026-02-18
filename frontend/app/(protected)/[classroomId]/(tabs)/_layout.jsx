@@ -21,7 +21,7 @@ export default function ClassroomLayout() {
                     tabBarStyle: Platform.select({
                         web: {
                             minWidth: 300,
-                            backgroundColor: Colors.secondaryColor,
+                            backgroundColor: Colors.secondaryColor
                         },
                         android: {
                             // height: 60,
@@ -86,7 +86,7 @@ export default function ClassroomLayout() {
                     )
                 }} />
                  <Tabs.Screen name='tests/[testId]' options={{
-                    // title: 'Settings',
+                    title: 'Test',
                     href : null,
                     // tabBarIcon: ({ color }) => (
                     //     <Ionicons name="settings-sharp" size={24} color={color} />

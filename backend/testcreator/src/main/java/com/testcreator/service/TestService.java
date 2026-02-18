@@ -12,6 +12,7 @@ import com.testcreator.exception.UnauthorizedException;
 import com.testcreator.model.ClassroomUser;
 import com.testcreator.model.Context;
 import com.testcreator.model.Option;
+import com.testcreator.model.OptionProperties;
 import com.testcreator.model.Permission;
 import com.testcreator.model.QuestionType;
 import com.testcreator.model.TestStatus;
