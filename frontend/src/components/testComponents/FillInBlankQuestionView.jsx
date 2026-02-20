@@ -3,7 +3,7 @@ import { TextInput, Text, View } from "react-native";
 import { fonts } from "../../../styles/fonts";
 // import { View } from "react-native-web";
 
-export default function FillInBlankQuestionView({ question, selectedAnswers, setSelectedAnswers , onNext , onPrevious}) {
+export default function FillInBlankQuestionView({ question, selectedAnswers, setSelectedAnswers , preview = false}) {
 
 
     const options = question.options;

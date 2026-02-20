@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import React, { useState } from 'react'
-import { IconButton, Menu } from 'react-native-paper'
+import { IconButton, Menu, RadioButton } from 'react-native-paper'
 import Colors from '../../styles/Colors'
 import QuestionRow from './QuestionRow';
 import MenuDropdown from './MenuDropdown';
@@ -24,7 +24,33 @@ export default function SingleChoiceQuestion({ mode, question, options, question
         );
     }
 
-    return <Text>Under Dev</Text>;
+    return (
+        <>
+            <QuestionRow
+                question={{ ...question }}
+                questionNumber={questionNumber}
+                mode={mode}
+            />
+             {options.map((opt, i) => {
+
+              
+                return (
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }} key={i}>
+
+                        <RadioButton
+                            status={opt.correct ? 'checked' : 'unchecked'}
+                            // onPress={() => onSelect(opt)}
+                            color={Colors.green}
+                        />
+                        <Text
+                            style={[styles.optionText]}
+                        >{opt.optionText}</Text>
+
+                    </View>
+                );
+            })}
+        </>
+    );
 }
 
 

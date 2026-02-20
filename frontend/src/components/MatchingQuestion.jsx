@@ -4,6 +4,7 @@ import { Checkbox, IconButton } from 'react-native-paper';
 import Colors from '../../styles/Colors';
 import QuestionRow from './QuestionRow';
 import { TextInput as PaperInput } from "react-native-paper";
+import { MCQComponent } from './OptionComponents';
 
 export default function MatchingQuestion({ mode, question, options, questionNumber, setAllQuestions, allQuestions }) {
 
@@ -14,7 +15,7 @@ export default function MatchingQuestion({ mode, question, options, questionNumb
                 <View style={styles.optionsList}>
                     {options.map((opt, i) => {
                         return (
-                            <View style={{flexDirection:'row',columnGap:20,marginVertical : 10}} >
+                            <View style={{ flexDirection: 'row', columnGap: 20, marginVertical: 10 }} >
                                 <PaperInput
                                     label={`Left pair ${i + 1}`}
                                     mode='outlined'
@@ -33,7 +34,31 @@ export default function MatchingQuestion({ mode, question, options, questionNumb
         );
     }
 
-    return <Text>Under Dev</Text>;
+    return (
+        <>
+            <QuestionRow
+                question={{ ...question }}
+                questionNumber={questionNumber}
+                mode={mode}
+            />
+            {options.map((opt, i) => {
+                return (
+                    <View style={{ flexDirection: 'row', columnGap: 20, marginVertical: 10 }} >
+                        <PaperInput
+                            label={`Left pair ${i + 1}`}
+                            mode='outlined'
+                            value={opt.optionText}
+                        />
+                        <PaperInput
+                            label={`right pair ${i + 1}`}
+                            mode='outlined'
+                            value={opt.matchingOptionProperties?.match}
+                        />
+                    </View>
+                );
+            })}
+        </>
+    );
 }
 
 

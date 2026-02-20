@@ -30,4 +30,5 @@ export default {
     lightBadge : '#EFF6FF',
     linkColor : "#2563EB",
     borderColor : '#CAE1FA',
+    green : '#009B4D'
 }

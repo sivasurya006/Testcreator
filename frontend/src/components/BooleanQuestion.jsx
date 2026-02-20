@@ -1,10 +1,10 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native'
 import React, { useState } from 'react'
-import {  RadioButton } from 'react-native-paper';
+import { RadioButton } from 'react-native-paper';
 import Colors from '../../styles/Colors';
 import QuestionRow from './QuestionRow';
 
-export default function McqQuestion({ mode, question, options, questionNumber, setAllQuestions , allQuestions}) {
+export default function McqQuestion({ mode, question, options, questionNumber, setAllQuestions, allQuestions }) {
 
     const [checked, setChecked] = useState([]);
 
@@ -17,21 +17,21 @@ export default function McqQuestion({ mode, question, options, questionNumber, s
                 <QuestionRow question={question} questionNumber={questionNumber} setAllTestQuestions={setAllQuestions} allQuestions={allQuestions} />
                 <View style={styles.optionsList}>
 
-                        {options.map((opt, i) => {
-                            const isChecked = checked.includes(opt);
-                            return (
-                                <View 
+                    {options.map((opt, i) => {
+                        const isChecked = checked.includes(opt);
+                        return (
+                            <View
                                 key={i}
-                                style={{flexDirection:'row' , alignItems : 'center'}}>
-                                    <RadioButton 
-                                        value={opt.optionText}
-                                        status={isChecked ? 'checked' : 'unchecked'}
-                                        onPress={() => setChecked([opt])}
-                                    />
-                                    <Text>{opt.optionText}</Text>
-                                </View>  
-                            );
-                        })}
+                                style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <RadioButton
+                                    value={opt.optionText}
+                                    status={isChecked ? 'checked' : 'unchecked'}
+                                    onPress={() => setChecked([opt])}
+                                />
+                                <Text>{opt.optionText}</Text>
+                            </View>
+                        );
+                    })}
                 </View>
                 <View>
                     <Text style={styles.correctAnswerLabel}>{"Correct answer : "}<Text style={styles.correctAnswerText}>{correctAnswer}</Text></Text>
@@ -40,7 +40,30 @@ export default function McqQuestion({ mode, question, options, questionNumber, s
         );
     }
 
-    return <Text>Under Dev</Text>;
+    return (
+        <>
+            <QuestionRow
+                question={{ ...question }}
+                questionNumber={questionNumber}
+                mode={mode}
+            />
+            {options.map((opt, i) => {
+            
+                return (
+                    <View
+                        key={i}
+                        style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <RadioButton
+                            value={opt.optionText}
+                            status={opt.correct ? 'checked' : 'unchecked'}
+                            color={Colors.green}
+                        />
+                        <Text>{opt.optionText}</Text>
+                    </View>
+                );
+            })}
+        </>
+    );
 }
 
 
@@ -55,8 +78,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 8,
         elevation: 6,
-        borderRadius:8,
-        marginHorizontal : 10
+        borderRadius: 8,
+        marginHorizontal: 10
     },
 
     questionRow: {

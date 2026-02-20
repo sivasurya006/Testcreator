@@ -6,7 +6,7 @@ import BooleanOption from './BooleanOptions'
 import { fonts } from '../../../styles/fonts'
 import RenderHTML from 'react-native-render-html'
 
-export default function QuestionView({ question, selectedAnswers, setSelectedAnswers }) {
+export default function QuestionView({ question, selectedAnswers, setSelectedAnswers , preview = false }) {
 
     const { width } = useWindowDimensions();
     const isWeb = Platform.OS === 'web';

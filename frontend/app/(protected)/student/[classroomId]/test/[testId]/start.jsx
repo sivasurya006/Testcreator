@@ -13,6 +13,7 @@ import ResultModal from '../../../../../../src/components/ResultModal'
 import FillInBlankQuestionView from '../../../../../../src/components/testComponents/FillInBlankQuestionView'
 import MacthcingQuestionView from '../../../../../../src/components/testComponents/MatchingQuestionView'
 import MatchingQuestionView from '../../../../../../src/components/testComponents/MatchingQuestionView'
+import DetailedTestReport from '../../../../../../src/components/DetailedTestReport'
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ export default function Test() {
   const [timesupModalVisible, setTimesupModalVisible] = useState(false);
   const [totalMarks, setTotalMarks] = useState(0);
   const [isResultPageOpen, setResultPageOpen] = useState(false);
+  const [ reportData , setReportData ]  =  useState([])
 
   const attemptId = useRef(null);
 
@@ -53,6 +55,7 @@ export default function Test() {
         }
       });
       setTotalMarks(result.data.totalMarks);
+      setReportData(result.data);
       setSubmitModalVisible(false)
       setResultPageOpen(true)
     } catch (err) {
@@ -178,7 +181,7 @@ export default function Test() {
       <TestFooter havePrevious={havePrevious} haveNext={haveNext} onNext={nextQuestion} onPrevious={previousQuestion} />
       <ConfirmModal message={'Submit the answer?'} normal={true} onCancel={() => setSubmitModalVisible(false)} visible={submitModalVisible} onConfirm={submitAnswer} />
       <ConfirmModal message={"Times up!\nYour answers submitted."} confirmOnly={true} onConfirm={onExit} visible={timesupModalVisible} normal={true} />
-      <ResultModal totalMarks={totalMarks} onExit={onExit} isResultPageOpen={isResultPageOpen} />
+      <DetailedTestReport totalMarks={totalMarks} onExit={onExit} isResultPageOpen={isResultPageOpen} questions={reportData.questions} />
     </View>
   )
 }

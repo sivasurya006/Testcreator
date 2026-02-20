@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.testcreator.dao.ClassroomUsersDao;
 import com.testcreator.dao.TestDao;
+import com.testcreator.dto.TestDto;
 import com.testcreator.dto.TestReportDto;
 import com.testcreator.dto.student.QuestionAnswerDto;
 import com.testcreator.dto.student.StartTestDto;
@@ -15,6 +16,7 @@ import com.testcreator.dto.student.TestOptionDto;
 import com.testcreator.dto.student.TestQuestionDto;
 import com.testcreator.model.Answer;
 import com.testcreator.model.AnswerSheet;
+import com.testcreator.model.CorrectionMethod;
 import com.testcreator.model.MatchingOptionProperties;
 import com.testcreator.model.QuestionType;
 import com.testcreator.util.TestValidator;
@@ -62,7 +64,12 @@ public class TimedTestService {
 	
 	public TestReportDto submitAnswer(int attemptId,int testId,List<QuestionAnswerDto> answers) throws SQLException {
 		if(testDao.saveAnswer(attemptId, convertListToMap(answers))) {
-			return validateTest(attemptId, testId);
+			TestDto test =  testDao.getTestById(testId);
+			if(test.getCorrectionMethod() == CorrectionMethod.AUTO) {
+				TestReportDto testReport = validateTest(attemptId, testId);
+				testReport.setTest(test);
+				return testReport;
+			}
 		}
 		return null;
 	}
