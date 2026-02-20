@@ -5,10 +5,11 @@ import { use, useState } from 'react';
 import { useGlobalSearchParams } from 'expo-router';
 import ConfirmModal from './modals/ConfirmModal';
 import QuestionEditor from './QuestionEditor';
-import { AppBoldText } from '../../styles/fonts';
+import { AppBoldText, AppMediumText, fonts } from '../../styles/fonts';
 import RenderHTML from 'react-native-render-html';
+import Colors from '../../styles/Colors';
 
-export default function QuestionRow({ question, questionNumber, setAllTestQuestions, allQuestions }) {
+export default function QuestionRow({ question, questionNumber, setAllTestQuestions, allQuestions, mode }) {
 
     const { classroomId } = useGlobalSearchParams();
     const { width } = useWindowDimensions();
@@ -66,27 +67,47 @@ export default function QuestionRow({ question, questionNumber, setAllTestQuesti
         <View style={styles.questionRow}>
             <View style={styles.questionContent}>
                 <Text style={styles.questionNumber}>
-                    {`Q${questionNumber}.  `}
+                    {`Q${questionNumber  || ''}.  `}
                 </Text>
                 <View style={{ flex: 1 }}>
                     <RenderHTML
-                        contentWidth={width - 100}
+                        // contentWidth={width - 100}
                         source={{ html: question.questionText }}
                         baseStyle={styles.htmlText}
                     />
                 </View>
             </View>
 
-            <View style={styles.toolsRow}>
-                <IconButton icon="pencil" size={18} onPress={handleEdit} />
-                <Pressable onPress={() => setDeleteLoading(true)}>
-                    <IconButton icon="delete" size={18} iconColor="red" />
-                </Pressable>
-            </View>
+            {
+                mode !== 'report' ? (
+                    <View style={styles.toolsRow}>
+                        <IconButton icon="pencil" size={18} onPress={handleEdit} />
+                        <Pressable onPress={() => setDeleteLoading(true)}>
+                            <IconButton icon="delete" size={18} iconColor="red" />
+                        </Pressable>
+                    </View>
+                ) : null
+            }
 
-            <Text style={styles.questionMark}>
-                Marks {question.marks}
-            </Text>
+
+
+            {
+                mode == 'report' ? (
+                    <View style={{ flexDirection: 'row', marginHorizontal : 10 , gap: 10, alignItems: 'center' }} >
+                        <View style={{ backgroundColor: Colors.lightBadge, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 16 }}>
+                            <AppMediumText style={{ color: Colors.primaryColor }} >Marks : {question.marks}</AppMediumText>
+                        </View>
+                        <View style={{ backgroundColor: Colors.lightBadge, paddingVertical: 4, paddingHorizontal: 8, borderRadius: 16 }}>
+                            <AppMediumText style={{ color: '#009B4D' }} >Scored : {question.givenMarks}</AppMediumText>
+                        </View>
+                    </View>
+                ) : (
+                    <AppMediumText style={styles.questionMark}>
+                        Marks {question.marks}
+                    </AppMediumText>
+                )
+            }
+
 
             {
                 deleteLoading ? (
@@ -111,7 +132,7 @@ export default function QuestionRow({ question, questionNumber, setAllTestQuesti
 
             }
 
-        </View>
+        </View >
     )
 }
 
@@ -198,7 +219,7 @@ function makeQuestionPayload(input) {
                 blankOptionProperties: { ...opt.blankOptionProperties }
             } : {}),
             ...(opt.matchingOptionProperties ? {
-                matchingOptionProperties : { ...opt.matchingOptionProperties }
+                matchingOptionProperties: { ...opt.matchingOptionProperties }
             } : {})
         }))
     };
@@ -231,6 +252,10 @@ const styles = StyleSheet.create({
     htmlText: {
         fontSize: 18,
         // fontWeight: '600',
+        fontFamily: fonts.regular,
+        flexWrap : 'wrap',
+        maxWidth : 900,
+        width : '100%'
     },
     toolsRow: {
         flexDirection: 'row',

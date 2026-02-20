@@ -5,7 +5,7 @@ import { AppBoldText, AppMediumText } from '../../../styles/fonts';
 import Colors from '../../../styles/Colors';
 import { SimpleLineIcons } from '@expo/vector-icons';
 
-export default function MatchingQuestionView({ question, selectedAnswers, setSelectedAnswers }) {
+export default function MatchingQuestionView({ question, selectedAnswers, setSelectedAnswers , preview = false }) {
 
   const lightMatchColors = [
     "#1565C0",
@@ -186,12 +186,12 @@ export default function MatchingQuestionView({ question, selectedAnswers, setSel
           })}
         </View>
         <View style={{ justifyContent : 'center' }}>
-          {Object.keys(matchedPairs).length === 0 && (
+          {/* {Object.keys(matchedPairs).length === 0 && (
             <AppMediumText style={{ fontSize: 16, fontStyle: 'italic', color: Colors.gray }}>
               No matches yet
             </AppMediumText>
-          )}
-          {answers.map((ans, idx) => {
+          )} */}
+          {/* {answers.map((ans, idx) => {
             if (ans.selectedRightIndex === undefined) return null;
             const leftText = options[idx].optionText;
             const rightText = shuffledRight.find(item => item.originalIndex === ans.selectedRightIndex)?.matchingOptionProperties.match;
@@ -203,7 +203,7 @@ export default function MatchingQuestionView({ question, selectedAnswers, setSel
                 {leftText} = {rightText}
               </AppBoldText>
             );
-          })}
+          })} */}
         </View>
       </View>
 
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   box: {
     padding: 16,
-    width: 160,
+    // width: 160,
     minHeight: 60,
     borderWidth: 1,
     marginVertical: 8,

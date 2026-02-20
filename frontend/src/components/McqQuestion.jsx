@@ -8,6 +8,9 @@ export default function McqQuestion({ mode, question, options, questionNumber, s
 
     const [checked, setChecked] = useState([]);
 
+
+    console.log(" I am getting question  ", question)
+
     const toggle = (opt) => {
         if (checked.includes(opt)) {
             return checked.filter(it => it !== opt);
@@ -45,7 +48,32 @@ export default function McqQuestion({ mode, question, options, questionNumber, s
         );
     }
 
-    return <Text>Under Dev</Text>;
+    return (
+        <>
+            <QuestionRow
+                question={{ ...question }}
+                questionNumber={questionNumber}
+                mode={mode}
+            />
+            <View style={styles.optionsList}>
+                {question.options.map((opt, i) => {
+                    // const isChecked = checked.includes(opt);
+                    return (
+                        <View style={styles.optionContainer} key={i}>
+                            <Checkbox
+                                status={opt.correct ? 'checked' : 'unchecked'}
+                                // onPress={() => setChecked(toggle(opt))}
+                                color='#009B4D'
+                            />
+                            <Text
+                                style={[styles.optionsText]}
+                            >{opt.optionText}</Text>
+                        </View>
+                    );
+                })}
+            </View>
+        </>
+    );
 }
 
 
@@ -59,8 +87,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15,
         shadowRadius: 8,
         elevation: 6,
-        borderRadius:8,
-        marginHorizontal : 10
+        borderRadius: 8,
+        marginHorizontal: 10
     },
 
     questionRow: {

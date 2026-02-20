@@ -3,13 +3,12 @@ import React, { useState } from 'react'
 import Colors from '../../styles/Colors';
 import QuestionRow from './QuestionRow';
 
-export default function FillInBlankQuestion({ mode, question, options , questionNumber, setAllQuestions, allQuestions }) {
-
-
+export default function FillInBlankQuestion({ mode, question, options, questionNumber, setAllQuestions, allQuestions }) {
+    
     if (!question) return null;
     const blankAnswers = {};
     options?.forEach(opt => {
-        console.log('option ',opt)
+        console.log('option ', opt)
         const idx = opt.blankOptionProperties?.blankIdx;
         if (idx) {
             blankAnswers[idx] = opt.optionText;
@@ -17,20 +16,20 @@ export default function FillInBlankQuestion({ mode, question, options , question
     });
 
     let blankCounter = 1;
-    console.log("options ",options)
-    console.log("blank answers ",blankAnswers)
+    console.log("options ", options)
+    console.log("blank answers ", blankAnswers)
     const questionWithAnswers = question.questionText.replace(/__BLANK__/g, () => {
         const answer = blankAnswers[blankCounter] || '';
-        console.log("blank answer of "+blankCounter)
+        console.log("blank answer of " + blankCounter)
         blankCounter++;
-        return " "+answer+" ";
+        return " <b>" + answer + "</b> ";
     });
 
-    console.log("question with answers ",questionWithAnswers)
+    console.log("question with answers ", questionWithAnswers)
 
     const [answers, setAnswers] = useState([]);
 
-    const parts =   question?.questionText?.split("__BLANK__") || [];
+    const parts = question?.questionText?.split("__BLANK__") || [];
 
     const handleChange = (text, blankIdx) => {
         setAnswers(prev => ({
@@ -72,7 +71,13 @@ export default function FillInBlankQuestion({ mode, question, options , question
         );
     }
 
-    return <Text>Under Dev</Text>;
+    return (
+        <QuestionRow
+            question={{ ...question, questionText: questionWithAnswers }}
+            questionNumber={questionNumber}
+            mode={mode}
+        />
+    );
 }
 
 const styles = StyleSheet.create({
