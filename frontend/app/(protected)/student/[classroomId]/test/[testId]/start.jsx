@@ -67,15 +67,6 @@ export default function Test() {
     setTimesupModalVisible(true);
   }
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   async function startNewTest() {
     try {
@@ -86,7 +77,8 @@ export default function Test() {
       attemptId.current = result.data.test.attemptId;
       connectWebSocket(result.data.wsUrl + "&testId=" + testId);
     } catch (err) {
-      if (err.response?.status === 403) setMessage('Maximum Attempts reached');
+      if (err.response?.status === 403){ setMessage('Maximum Attempts reached');
+      }
       console.log(err);
     }
   }
@@ -145,15 +137,6 @@ export default function Test() {
   }
 
   const containerWidth = Platform.OS === 'web' ? Math.min(800, windowWidth - 40) : '100%';
-
-
-  document.addEventListener("visibilitychange", function() {
-    if (document.hidden) {
-        console.log("User switched tab");
-    } else {
-        console.log("User came back");
-    }
-});
 
   return (
     <View style={styles.screen}>
