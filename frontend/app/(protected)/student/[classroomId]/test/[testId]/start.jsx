@@ -132,19 +132,65 @@ export default function Test() {
   // }, []);
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (!document.fullscreenElement) {
-        console.log("User left fullscreen");
+    startNewTest()
+  }, [classroomId, testId]);
+
+  const hiddenStart = useRef(null);  /// track the previuos value
+  const tabSwitchCount = useRef(0);
+  const violationPoints = useRef(0);
+
+
+
+const pageLoaded = useRef(false);
+
+  const handleBlur = () => {
+    if (!pageLoaded.current) { pageLoaded.current = true; return; }
+    hiddenStart.current = Date.now();
+    tabSwitchCount.current += 1;
+    violationPoints.current += 1;
+    console.log('Window blur…');
+  };
+
+  const handleFocus = () => {
+    if (!hiddenStart.current) return;
+    const secondsAway = (Date.now() - hiddenStart.current) / 1000;
+    console.log('User returned after', secondsAway, 'seconds');
+
+    if (secondsAway > 30) {
+      violationPoints.current += 30;
+    } else if (secondsAway > 10) {
+      violationPoints.current += 5;
+    }
+    hiddenStart.current = null;
+
+    if (violationPoints.current > 10) {
+      console.log('Max tab switches reached, auto‑submitting');
+      submitAnswer(); 
+    }
+  };
+
+  window.addEventListener('blur', handleBlur);
+  window.addEventListener('focus', handleFocus);
+
+    useEffect(() => {
+          if (Platform.OS == 'web') return;
+
+    const appState = useRef(AppState.currentState);
+
+    const handleAppStateChange = (nextAppState) => {
+      if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
+        console.log("User left the app");
         setTabWarningVisible(true);
 
       }
+
+      appState.current = nextAppState;
     };
 
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      subscription.remove();
     };
   }, []);
 
@@ -242,6 +288,8 @@ export default function Test() {
     } catch (err) {
       if (err.response?.status === 403) setMessage('Maximum Attempts reached');
       console.log('startNewTest error:', err);
+      if (err.response?.status === 403) setMessage('Maximum Attempts reached');
+      console.log('startNewTest error:', err);
     }
   }
 
@@ -298,6 +346,8 @@ export default function Test() {
 
 
 
+
+
   return (
     <View style={styles.screen}>
       <TestHeader data={data.test} onTimeEnd={onTimeEnd} onSubmit={onSubmit} onExit={onExit} />
@@ -336,13 +386,12 @@ export default function Test() {
       <DetailedTestReport totalMarks={totalMarks} onExit={onExit} isResultPageOpen={isResultPageOpen} questions={reportData.questions} />
 
       <ConfirmModal
-        message={"Tab switch detected or you left fullscreen mode!\nYour answers will be submitted and you will exit the test."}
-        confirmOnly
+        message={`Tab Switch Warning!\n\nViolation #${tabSwitchCount.current} of 10\n\nYou switched tabs or windows. Please stay on this test page to avoid penalties.\n\nContinue with caution or your test will be auto-submitted after 10 violations.`}
+        normal={true}
         visible={tabWarningVisible}
+        onCancel={() => setTabWarningVisible(false)}
         onConfirm={() => {
           setTabWarningVisible(false);
-          submitAnswer();
-          onExit();
         }}
       />
     </View>
