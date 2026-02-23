@@ -204,7 +204,6 @@ export default function Test() {
     };
 
     const interval = setInterval(detectDevTools, 1000);
-    const interval = setInterval(detectDevTools, 1000);
 
     return () => {
       clearInterval(interval);
