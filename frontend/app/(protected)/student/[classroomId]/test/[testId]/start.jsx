@@ -483,9 +483,10 @@ export default function Test() {
 
 
   )
-
-}
   
+}
+
+)}
 
 const styles = StyleSheet.create({
   screen: {

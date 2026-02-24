@@ -5,7 +5,7 @@ import Colors from '../../styles/Colors';
 import QuestionRow from './QuestionRow';
 import { TextInput as PaperInput } from "react-native-paper";
 import { MCQComponent } from './OptionComponents';
-import { AppSemiBoldText } from '../../styles/fonts';
+import { AppRegularText, AppSemiBoldText } from '../../styles/fonts';
 
 export default function MatchingQuestion({ mode, question, options, questionNumber, setAllQuestions, allQuestions, selectedOptions }) {
 
@@ -66,41 +66,48 @@ export default function MatchingQuestion({ mode, question, options, questionNumb
                             value={opt.matchingOptionProperties?.match}
                             editable={false}
                         />
+                        <AppRegularText style={{ marginLeft: 'auto' }} >{opt.optionMark}</AppRegularText>
                     </View>
                 );
             })}
 
-            <AppSemiBoldText>Your Matchings :</AppSemiBoldText>
+            {
+                mode !== 'preview' && (
+                    <>
+                        <AppSemiBoldText>{mode == 'grade' ? 'Student' : 'Your'} Matchings :</AppSemiBoldText>
 
-            {options.map((opt, i) => {
-                const selected = selectedMap[opt.optionId];
+                        {options.map((opt, i) => {
+                            const selected = selectedMap[opt.optionId];
 
-                const correctMatch = opt.matchingOptionProperties?.match;
-                const userMatch = selected?.answerPropertiesDto?.match;
+                            const correctMatch = opt.matchingOptionProperties?.match;
+                            const userMatch = selected?.answerPropertiesDto?.match;
 
-                const isCorrect = correctMatch === userMatch;
+                            const isCorrect = correctMatch === userMatch;
 
-                return (
-                    <View
-                        key={opt.optionId}
-                        style={{ flexDirection: 'row', columnGap: 20, marginVertical: 10 }}
-                    >
-                        <PaperInput
-                            label={`Left pair ${i + 1}`}
-                            mode="outlined"
-                            value={opt.optionText}
-                            editable={false}
-                        />
+                            return (
+                                <View
+                                    key={opt.optionId}
+                                    style={{ flexDirection: 'row', columnGap: 20, marginVertical: 10 }}
+                                >
+                                    <PaperInput
+                                        label={`Left pair ${i + 1}`}
+                                        mode="outlined"
+                                        value={opt.optionText}
+                                        editable={false}
+                                    />
 
-                        <PaperInput
-                            label={`Right pair ${i + 1}`}
-                            mode="outlined"
-                            value={userMatch}
-                            editable={false}
-                        />
-                    </View>
-                );
-            })}
+                                    <PaperInput
+                                        label={`Right pair ${i + 1}`}
+                                        mode="outlined"
+                                        value={userMatch}
+                                        editable={false}
+                                    />
+                                </View>
+                            );
+                        })}
+                    </>
+                )
+            }
         </>
     );
 }
