@@ -19,6 +19,8 @@ const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 export default function Test() {
   const { classroomId, testId } = useGlobalSearchParams();
 
+
+
   const [data, setData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState([]);
@@ -27,11 +29,25 @@ export default function Test() {
   const [timesupModalVisible, setTimesupModalVisible] = useState(false);
   const [totalMarks, setTotalMarks] = useState(0);
   const [isResultPageOpen, setResultPageOpen] = useState(false);
-  const [ reportData , setReportData ]  =  useState([])
+  const [reportData, setReportData] = useState([]);
+  const [submittedConfirmModalVisible, setSubmittedConfirmModalVisible] = useState(false);
+  const [tabWarningVisible, setTabWarningVisible] = useState(false);
+  const [fullScreenExitWarning, setFullScreenExitWarning] = useState(false);
+
+  const selectedAnswersRef = useRef(selectedAnswers);
+
+  useEffect(() => {
+  selectedAnswersRef.current = selectedAnswers;
+}, [selectedAnswers]);
 
   const attemptId = useRef(null);
 
   function onExit() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch((err) => {
+        console.log('Exit fullscreen failed:', err);
+      });
+    }
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -47,20 +63,35 @@ export default function Test() {
 
     console.log('Submitting with attemptId:', attemptId.current);
     console.log(testId, classroomId);
+
+    console.log('Selected answers payload:',makePayload(selectedAnswersRef.current));
+
     try {
+      console.log('inside try')
       if (!attemptId.current) throw new Error('Attempt ID not set');
       const result = await api.post('/timedtest/submit',
-        makePayload(selectedAnswers), {
+        makePayload(selectedAnswersRef.current), {
         headers: {
           'X-ClassroomId': classroomId,
           'X-TestId': testId,
           'X-AttemptId': attemptId.current
         }
       });
+
+      if (result.data == null) {
+        console.log('No result data received');
+        setSubmittedConfirmModalVisible(true)
+        return;
+      }
+
+
+      console.log('Submission result: ======================================== ', result.data);
+
       setTotalMarks(result.data.totalMarks);
       setReportData(result.data);
-      setSubmitModalVisible(false)
-      setResultPageOpen(true)
+      setSubmitModalVisible(false);
+      setResultPageOpen(true);
+
     } catch (err) {
       console.log(err);
     }
@@ -80,6 +111,9 @@ export default function Test() {
       });
     }
   }
+
+
+    const fullScreenExitCount = useRef(0);
 
   useEffect(() => {
     const detectDevTools = () => {
@@ -104,18 +138,13 @@ export default function Test() {
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
+
     const handleBeforeUnload = (event) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-
-    const handleKeyDown = (e) => {
+    const handleKeyDowns = (e) => {
       if (e.key !== 'Escape') return;
       if (!document.fullscreenElement) {
         fullScreenExitCount.current += 1;
@@ -129,19 +158,8 @@ export default function Test() {
         }
       }
     };
+    document.addEventListener('keydown', handleKeyDowns);
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  useEffect(() => {
-
-    startNewTest();
-
-  }, [classroomId, testId]);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
 
     const handleCopyPaste = (e) => {
       e.preventDefault();
@@ -163,77 +181,24 @@ export default function Test() {
     document.addEventListener('paste', handleCopyPaste);
     document.addEventListener('cut', handleCopyPaste);
 
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('copy', handleCopyPaste);
-      document.removeEventListener('paste', handleCopyPaste);
-      document.removeEventListener('cut', handleCopyPaste);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-
     const handleFullscreenChange = () => {
       if (!document.fullscreenElement) {
         fullScreenExitCount.current += 1;
         console.log('Exited fullscreen, count:', fullScreenExitCount.current);
 
-        if (fullScreenExitCount.current === 1) {
+        if (fullScreenExitCount.current > 1) {
           console.log('First fullscreen exit — showing warning');
           fullScreenExitCount.current += 1; // reset to 1 in case it was incremented by Escape key handler
-          shouldAutoFullscreen.current = false;
           setFullScreenExitWarning(true);
-        } else if (fullScreenExitCount.current >= 2) {
+        } else if (fullScreenExitCount.current > 2) {
           console.log('Second fullscreen exit — submitting test');
           submitAnswer();
         }
-      } else {
-        shouldAutoFullscreen.current = true;
-        setFullScreenExitWarning(false);
       }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  const hiddenStart = useRef(null);  /// track the previuos
-  const tabSwitchCount = useRef(0);
-  const violationPoints = useRef(0);
-
-  const pageLoaded = useRef(false);
-
-  const handleBlur = () => {
-    if (!pageLoaded.current) { pageLoaded.current = true; return; }
-    hiddenStart.current = Date.now();
-    tabSwitchCount.current += 1;
-    violationPoints.current += 1;
-    console.log('Window blur…');
-  };
-
-  const handleFocus = () => {
-    if (!hiddenStart.current) return;
-    const secondsAway = (Date.now() - hiddenStart.current) / 1000;
-    console.log('User returned after', secondsAway, 'seconds');
-
-    if (tabSwitchCount.current > 1) {
-      console.log('Tab switch count exceeded 2, auto-submitting test');
-      submitAnswer();
-    } else if (tabSwitchCount.current >= 1) {
-      violationPoints.current += 5;
-      setTabWarningVisible(true);
-    }
-
-    hiddenStart.current = null;
-  };
-
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const onBlur = () => {
       if (isResultPageOpen) return;
@@ -248,48 +213,70 @@ export default function Test() {
     window.addEventListener('blur', onBlur);
     window.addEventListener('focus', onFocus);
 
-    return () => {
-      window.removeEventListener('blur', onBlur);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, [isResultPageOpen]);
-
-  useEffect(() => {
-    if (Platform.OS == 'web') return;
-
-    const appState = useRef(AppState.currentState);
-
-    const handleAppStateChange = (nextAppState) => {
-      if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
-        console.log("User left the app");
-        setTabWarningVisible(true);
-      }
-    };
-
-    const interval = setInterval(detectDevTools, 1000);
-
-    return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
+
+  console.log("selectedAnswers out side ", selectedAnswers)
+
+
+
+  const hiddenStart = useRef(null);  /// track the previuos
+  const tabSwitchCount = useRef(0);
+  const violationPoints = useRef(0);
+  const pageLoaded = useRef(false);
+
+  const handleBlur = () => {
+    // if (!pageLoaded.current) { pageLoaded.current = true; return; }
+    hiddenStart.current = Date.now();
+    tabSwitchCount.current += 1;
+    violationPoints.current += 1;
+    console.log('Window blur…');
+    console.log('aelected answers inside handle blur  ', selectedAnswers);
+  };
+
+  const handleFocus = () => {
+    if (!hiddenStart.current) return;
+    const secondsAway = (Date.now() - hiddenStart.current) / 1000;
+    console.log('User returned after', secondsAway, 'seconds');
+
+
+    console.log('before exeeding selected answers  ', selectedAnswers);
+
+    if (tabSwitchCount.current > 2) {
+      console.log("in fosus")
+      console.log('Tab switch count exceeded 2, auto-submitting test');
+      console.log('before submit answer selected answers  ', selectedAnswers);
+      submitAnswer();
+    } else if (tabSwitchCount.current > 1) {
+      violationPoints.current += 5;
+
+      setTabWarningVisible(true);
+    }
+
+    hiddenStart.current = null;
+  };
+
+
+  // useEffect(() => {
+  //   if (Platform.OS == 'web') return;
+
+  //   const appState = useRef(AppState.currentState);
+
+  //   const handleAppStateChange = (nextAppState) => {
+  //     if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
+  //       console.log("User left the app");
+  //       setTabWarningVisible(true);
+  //     }
+  //   };
+
+  //   const interval = setInterval(detectDevTools, 1000);
+
+  //   return () => clearInterval(interval);
+  // }, []);
+
+
+
 
   async function startNewTest() {
 
@@ -309,7 +296,7 @@ export default function Test() {
       attemptId.current = result.data.test.attemptId;
       connectWebSocket(result.data.wsUrl + "&testId=" + testId);
 
-      if (Platform.OS === 'web' && typeof document !== 'undefined' && document.documentElement.requestFullscreen && shouldAutoFullscreen.current) {
+      if (Platform.OS === 'web' && typeof document !== 'undefined' && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch((err) => {
           console.log('Fullscreen request failed:', err);
         });
@@ -321,27 +308,6 @@ export default function Test() {
     }
   }
 
-  // useEffect(() => {
-  //   const handleKeyDown = (e) => {
-  //     if (
-  //       (e.ctrlKey || e.metaKey) &&
-  //       ['c', 'v', 'x', 'a'].includes(e.key.toLowerCase())
-  //     ) {
-  //       e.preventDefault();
-  //       alert("Copy/Paste is disabled during the test");
-  //     }
-  //   };
-
-  //   window.addEventListener("keydown", handleKeyDown);
-  //   return () => window.removeEventListener("keydown", handleKeyDown);
-  // }, []);
-
-  //   useEffect(() => {
-  //   const handleContextMenu = (e) => e.preventDefault();
-
-  //   window.addEventListener("contextmenu", handleContextMenu);
-  //   return () => window.removeEventListener("contextmenu", handleContextMenu);
-  // }, []);
 
   const wsRef = useRef(null);
 
@@ -373,6 +339,7 @@ export default function Test() {
   useEffect(() => {
     startNewTest()
   }, [classroomId, testId]);
+
 
   if (!data || !data.test) {
     return (
@@ -416,7 +383,7 @@ export default function Test() {
 
         <Text style={styles.quesNumber}>{currentIndex + 1} / {questions.length}</Text>
 
-        <View style={[styles.content, (currentQuestion.type != 'FILL_BLANK' && currentQuestion.type != 'MATCHING' ) ? { width: containerWidth } : { alignItems: 'center', margin: 'auto', width: containerWidth + 150 }]}>
+        <View style={[styles.content, (currentQuestion.type != 'FILL_BLANK' && currentQuestion.type != 'MATCHING') ? { width: containerWidth } : { alignItems: 'center', margin: 'auto', width: containerWidth + 150 }]}>
           {
             currentQuestion.type == 'FILL_BLANK' ? (
               <FillInBlankQuestionView question={currentQuestion} selectedAnswers={selectedAnswers} setSelectedAnswers={setSelectedAnswers} />
@@ -434,6 +401,10 @@ export default function Test() {
       <ConfirmModal message={'Submit the answer?'} normal={true} onCancel={() => { setSubmitModalVisible(false) }} visible={submitModalVisible} onConfirm={submitAnswer} />
       <ConfirmModal message={"Times up!\nYour answers submitted."} confirmOnly={true} onConfirm={onExit} visible={timesupModalVisible} normal={true} />
       <DetailedTestReport totalMarks={totalMarks} onExit={onExit} isResultPageOpen={isResultPageOpen} questions={reportData.questions} />
+      <ConfirmModal message={"Your answers submitted successfully."} confirmOnly={true} onConfirm={() => { setSubmittedConfirmModalVisible(false); onExit() }} visible={submittedConfirmModalVisible} normal={true} />
+      <ConfirmModal message={"tab warning"} confirmOnly={true} onConfirm={() => { setTabWarningVisible(false) }} visible={tabWarningVisible} normal={true} />
+      <ConfirmModal message={"full screen exit warning"} confirmOnly={true} onConfirm={() => { setFullScreenExitWarning(false); requestFullscreenMode(); }} visible={fullScreenExitWarning} normal={true} />
+
     </View>
   )
 
