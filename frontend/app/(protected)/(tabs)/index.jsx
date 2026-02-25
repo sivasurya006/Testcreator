@@ -32,6 +32,7 @@ export default function Index() {
     const [createModalVisible, setCreateModalVisible] = useState(false);
     const [classroomName, setClassroomName] = useState("");
     const [isLoading, setLoading] = useState(false);
+    const [search, setSearch] = useState('');
 
     const onConfirmCreateClassModal = async () => {
         if (classroomName.trim().length == 0) return;
@@ -58,6 +59,10 @@ export default function Index() {
         }
         get()
     }, [])
+
+    const filteredClassrooms = createdClassrooms.filter(item =>
+        item.classroomName.toLowerCase().includes(search.toLowerCase())
+    );
 
     async function handleCreateClassroom() {
         try {
@@ -90,12 +95,17 @@ export default function Index() {
                 <View style={{ flex: 1, backgroundColor: Colors.bgColor }}>
 
                     <LoadingScreen visible={isLoading} />
-                    <TopBar setCreateModalVisible={setCreateModalVisible} isLargeScreen={isLargeScreen} />
+                    <TopBar
+                        setCreateModalVisible={setCreateModalVisible}
+                        isLargeScreen={isLargeScreen}
+                        search={search}
+                        setSearch={setSearch}
+                    />
                     {createdClassrooms.length == 0 ? (
                         <EmptyClassroom message="No classroom created" />
                     ) : <FlatList
                         numColumns={numColumns}
-                        data={createdClassrooms}
+                        data={filteredClassrooms}
                         key={numColumns}
                         keyExtractor={item => item.classroomId.toString()}
                         renderItem={({ item }) => (
@@ -143,11 +153,9 @@ async function getAllCreatedClassrooms(setCreatedClassrooms) {
     }
 }
 
-function TopBar({ setCreateModalVisible, isLargeScreen }) {
+function TopBar({ setCreateModalVisible, isLargeScreen, search, setSearch }) {
 
     const [isHovered, setIsHovered] = useState(false);
-    const [search, setSearch] = useState('');
-    const [selectedDate, setSelectedDate] = useState(null);
 
     return (
         <View style={styles.topBar}>
