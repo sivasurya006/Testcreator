@@ -93,16 +93,17 @@ export default function StudentList() {
               </View>
             ) : (
               <View style={styles.tableContainer}>
-                <View style={[styles.tableRow, styles.tableHeader ]}>
-                  {/* <Text style={[styles.tableItem, styles.headerItem]}>S.No</Text> */}
-                  <Text style={[styles.tableItem, styles.headerItem]}>Name</Text>
-                  <Text style={[styles.tableItem, styles.headerItem]}>Email</Text>
-                  <Text style={[styles.tableItem, styles.headerItem]}>Enrolled Date</Text>
+                <View style={[styles.tableRow, styles.tableHeader]}>
+                  <Text style={[styles.tableItem, styles.headerItem]}>S.No</Text>
+                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 70}]}>Name</Text>
+                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 90}]}>Email</Text>
+                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 70}]}>Enrolled Date</Text>
                   <Text style={[styles.tableItem, styles.headerItem, styles.progressHeader]}>Progress</Text>
                   <Text style={[styles.tableItem, styles.headerItem, styles.actionHeader]} />
                 </View>
                 {/* <View>
                   {studentsList.map((student, i) => {
+                    console.log("student ", student);
                     const totalTests = student.user?.totalTestCount || 0;
                     const totalAttempted = student.user?.totalAttemptedTestCount || 0;
                     const studentProgress = totalTests > 0 ? (totalAttempted / totalTests) * 100 : 0;
@@ -242,7 +243,7 @@ function TobBar({ setInviteStudentModalVisible }) {
   return (
     <View style={styles.topBar}>
       <TextInput
-        placeholder="Search student..."
+        placeholder="Search trainee..."
         value={searchText}
         onChangeText={setSearchText}
         style={styles.searchInput}
