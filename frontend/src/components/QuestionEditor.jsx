@@ -8,12 +8,11 @@ import { BooleanComponent, FillBlankComponent, MatchingComponents, MCQComponent,
 import { Checkbox } from 'react-native-paper'
 import { AppBoldText, AppMediumText, AppRegularText, AppSemiBoldText } from '../../styles/fonts'
 import { AntDesign } from '@expo/vector-icons'
-import { platform, type } from 'node:os'
 import MatchingQuestion from './MatchingQuestion'
 
 
 const options = [
-    { optionText: 'Multi choice options', value: 'MCQ' },
+    { optionText: 'Multiple choices', value: 'MCQ' },
     { optionText: 'Single choice', value: 'SINGLE' },
     { optionText: 'True / False', value: 'BOOLEAN' },
     { optionText: 'Fill in the blanks', value: "FILL_BLANK" },

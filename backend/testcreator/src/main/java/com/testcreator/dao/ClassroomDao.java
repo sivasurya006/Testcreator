@@ -1,29 +1,12 @@
 package com.testcreator.dao;
 
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.security.SecureRandom;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Connection;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
-import java.sql.Ref;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
 import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
+import java.sql.Statement;
+import java.time.Instant;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.testcreator.dto.ClassroomDto;
@@ -35,9 +18,6 @@ import com.testcreator.model.User;
 import com.testcreator.model.UserRole;
 import com.testcreator.util.ClassroomCodeGenerator;
 import com.testcreator.util.Queries;
-
-import java.util.Calendar;
-import java.util.LinkedList;
 
 public class ClassroomDao {
 	private final Connection connection;
@@ -389,9 +369,9 @@ public class ClassroomDao {
 //			deleteClass.setInt(1, classroomId);
 			System.out.println("user_id" + userId);
 			deleteClass.setInt(1, userId);
+			deleteClass.setInt(2, classroomId);
 
 			if (deleteClass.executeUpdate() == 1) {
-				System.out.println("deleted");
 				return true;
 			} else {
 				throw new ClassroomNotNoundException();
