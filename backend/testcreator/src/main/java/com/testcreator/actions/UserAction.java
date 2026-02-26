@@ -62,7 +62,7 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 			if(clientType.equals("mobile")) {
 				this.authDto = new UserAuthenticationDto(true, token);
 			}else {
-				String cookie = "accessToken=" + token +
+				String cookie = "token=" + token +
 		                "; Path=/" +
 		                "; Max-Age=86400" +
 		                "; HttpOnly" +
@@ -122,7 +122,7 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 		if(clientType.equals("mobile")) {
 			this.authDto = new UserAuthenticationDto(true, token);
 		}else {
-			String cookie = "accessToken=" + token +
+			String cookie = "token=" + token +
 	                "; Path=/" +
 	                "; Max-Age=86400" +
 	                "; HttpOnly" +
