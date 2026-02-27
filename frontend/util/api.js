@@ -3,10 +3,9 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { router, useRouter } from "expo-router";
 
-const devMode = false;
 
 const api = axios.create({
-    baseURL:  devMode ? 'http://localhost:8080/testcreator/api' :  'https://testora-backend.onrender.com/api',
+    baseURL:'https://testora-backend.onrender.com/api',
     timeout: 15000,
     headers: {
         'X-Client-Type': Platform.OS == 'web' ? 'web' : 'mobile'
@@ -18,14 +17,9 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
 
-  
+    if (Platform.OS != 'web') {
         try {
-            let token;
-            if (Platform.OS != 'web') {
-                token = await SecureStore.getItemAsync("token");
-            }else{
-                token = localStorage.getItem("token");
-            }
+            const token = await SecureStore.getItemAsync('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
                 console.log(token, "Added");
@@ -33,7 +27,7 @@ api.interceptors.request.use(async (config) => {
         } catch (err) {
             console.log(err);
         }
-    
+    }
 
     return config;
 
