@@ -12,6 +12,7 @@ import FillInBlankQuestion from '../../../../../../src/components/FillIntheBlank
 import MatchingQuestion from '../../../../../../src/components/MatchingQuestion';
 import { AppRegularText } from '../../../../../../styles/fonts';
 import LoadingScreen from '../../../../../../src/components/LoadingScreen';
+import AIQuestionGeneratorBot from '../../../../../../src/components/AIQuestionGeneratorBot';
 
 
 // {
@@ -50,9 +51,13 @@ export default function Edit() {
         setIsLoading(true);
         const newQuestion = await createNewQuestion(constructPayload ? makeQuestionPayload(question) : question, classroomId, testId);
         console.log(newQuestion)
-        if (!newQuestion) return;
-        setAllQuestions([...allQuestions, makeResultToQuestion(newQuestion)]);
+        if (!newQuestion) {
+            setIsLoading(false);
+            throw new Error('Failed to create question');
+        }
+        setAllQuestions((prevQuestions) => [...prevQuestions, makeResultToQuestion(newQuestion)]);
         setIsLoading(false);
+        return newQuestion;
     }
 
     useEffect(() => {
@@ -161,6 +166,7 @@ export default function Edit() {
                 >
                     <Text style={styles.addNewText}>+</Text>
                 </Pressable>
+                <AIQuestionGeneratorBot onUseQuestion={(questionPayload) => addQuestion(questionPayload, false)} />
             </View>
             {
                 isAddQuesModalVisible ? (

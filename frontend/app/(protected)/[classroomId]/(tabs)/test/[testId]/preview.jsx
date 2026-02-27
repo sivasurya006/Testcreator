@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import React, { Activity, useEffect, useState } from 'react'
 import api from '../../../../../../util/api';
 import { router, useGlobalSearchParams } from 'expo-router';
 import { AppBoldText } from '../../../../../../styles/fonts';
@@ -11,57 +11,70 @@ import BooleanQuestion from '../../../../../../src/components/BooleanQuestion';
 import FillInBlankQuestion from '../../../../../../src/components/FillIntheBlankQuestion';
 import MatchingQuestion from '../../../../../../src/components/MatchingQuestion';
 import Colors from '../../../../../../styles/Colors';
+import { ActivityIndicator } from 'react-native-paper';
 
 export default function Preview() {
 
-  const { classroomId, testId } = useGlobalSearchParams();
-  const [allQuestions, setAllQuestions] = useState([]);
+    const { classroomId, testId } = useGlobalSearchParams();
+    const [allQuestions, setAllQuestions] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!testId) return
-    const fetchQuestions = async function () {
-      const questions = await getAllTestQuestion(classroomId, testId);
-      setAllQuestions(questions);
-    }
-    if (testId) {
-      fetchQuestions();
-    }
-  }, [classroomId, testId]);
-
-
-  console.log('Preview questions ,', allQuestions)
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => router.canGoBack() && router.back()} style={styles.closeButton}>
-          <AntDesign name="close" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-      <ScrollView style={{
-        flex: 1,
-        maxWidth: 1200,
-        width: '100%',
-        boxShadow: Colors.blackBoxShadow,
-        marginHorizontal: 10,
-        elevation: 6,
-        borderRadius: 8,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        backgroundColor: Colors.white,
-      }}>
-        {
-          allQuestions?.map((ques, index) => (
-            <View key={ques.id} style={{ margin: 20 }}>
-              {
-                getQuestion(ques, index + 1)
-              }
-            </View>
-          ))
+    useEffect(() => {
+        if (!testId) return
+        const fetchQuestions = async function () {
+            setIsLoading(true);
+            const questions = await getAllTestQuestion(classroomId, testId);
+            setAllQuestions(questions);
+            setIsLoading(false);
         }
-      </ScrollView>
-    </View>
-  )
+        if (testId) {
+            fetchQuestions();
+        }
+    }, [classroomId, testId]);
+
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.headerContainer}>
+                <TouchableOpacity
+                    onPress={() => router.canGoBack() && router.back()}
+                    style={styles.closeButton}
+                >
+                    <AntDesign name="close" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Preview Paper */}
+            <View style={styles.previewPaper}>
+
+                {isLoading ? (
+                    <View style={styles.centerContent}>
+                        <ActivityIndicator
+                            size="large"
+                            color={Colors.primaryColor}
+                        />
+                    </View>
+                ) : allQuestions.length === 0 ? (
+                    <View style={styles.centerContent}>
+                        <AppBoldText>No Questions Found</AppBoldText>
+                    </View>
+                ) : (
+                    <ScrollView
+                        contentContainerStyle={{ paddingVertical: 10 }}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {allQuestions.map((ques, index) => (
+                            <View key={ques.id} style={{ margin: 20 }}>
+                                {getQuestion(ques, index + 1)}
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+
+            </View>
+        </View>
+    );
+
 }
 
 
@@ -130,25 +143,25 @@ function getQuestion(item, index) {
 
 
 async function getAllTestQuestion(classroomId, testId) {
-  try {
-    const result = await api.get('/api/tests/getTestQuestions', {
-      headers: {
-        "X-ClassroomId": classroomId,
-        "X-TestId": testId
-      }
-    });
+    try {
+        const result = await api.get('/api/tests/getTestQuestions', {
+            headers: {
+                "X-ClassroomId": classroomId,
+                "X-TestId": testId
+            }
+        });
 
-    if (result?.status == 200 && result.data) {
-      console.log("questions fetched successfully");
-      return result.data;
-    } else {
-      console.log("can't fetch questions");
-      return [];
+        if (result?.status == 200 && result.data) {
+            console.log("questions fetched successfully");
+            return result.data;
+        } else {
+            console.log("can't fetch questions");
+            return [];
+        }
+    } catch (err) {
+        console.log(err);
+        return [];
     }
-  } catch (err) {
-    console.log(err);
-    return [];
-  }
 }
 
 
@@ -286,6 +299,22 @@ const styles = StyleSheet.create({
         width: 1,
         height: '60%',
         backgroundColor: '#D6DDE6',
+    },
+    previewPaper: {
+        flex: 1,
+        width: '100%',
+        maxWidth: 1200,
+        backgroundColor: Colors.white,
+        borderRadius: 8,
+        elevation: 6,
+        marginHorizontal: 10,
+        paddingHorizontal: 20,
+    },
+
+    centerContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 })
 

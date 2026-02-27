@@ -134,7 +134,7 @@ export default function CreatedTestList({ filter, search, isCreateTestModalVisib
             <AppMediumText>No Draft Tests</AppMediumText>
           </View>
         ) : (
-          filteredTests.length == 0 && (
+          (filteredTests.length == 0 && !isLoading ) && (
             <View style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -100 }, { translateY: -20 }] }}>
               <Pressable
                 style={styles.addButton}
