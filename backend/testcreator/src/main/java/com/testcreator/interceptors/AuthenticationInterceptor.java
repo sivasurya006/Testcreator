@@ -134,9 +134,10 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 
 		boolean haveRedirect = requestURI.contains("/join");
 		
-		String code = request.getQueryString().split("=")[1];
 		
-		if(haveRedirect) {
+		
+		if(haveRedirect && request.getQueryString() != null) {
+			String code = request.getQueryString().split("=")[1];
 			requestURI = "join/classroom?code="+code;
 			System.out.println("setting redirect uri "+requestURI);
 		}
