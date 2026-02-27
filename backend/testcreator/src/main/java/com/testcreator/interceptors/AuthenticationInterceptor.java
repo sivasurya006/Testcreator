@@ -128,12 +128,16 @@ public class AuthenticationInterceptor extends AbstractInterceptor {
 		String clientType = request.getHeader("X-Client-Type");
 		String tokenValue = null;
 		String requestURI = request.getRequestURI() + "?" + request.getQueryString();
+		
+		System.out.println("Path info befor : "+requestURI);
 
 
 		boolean haveRedirect = requestURI.contains("/join");
 		
+		String code = request.getQueryString().split("=")[1];
+		
 		if(haveRedirect) {
-			requestURI = "join/classroom?code="+request.getQueryString();
+			requestURI = "join/classroom?code="+code;
 			System.out.println("setting redirect uri "+requestURI);
 		}
 
