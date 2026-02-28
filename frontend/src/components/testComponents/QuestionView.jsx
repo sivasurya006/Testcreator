@@ -47,7 +47,7 @@ export default function QuestionView({ question, selectedAnswers, setSelectedAns
 
             <View style={styles.questionContainer}>
                 <RenderHTML
-                    contentWidth={width - 100}
+                    contentWidth={Math.min(900, width - 48)}
                     source={{ html: question.questionText }}
                     baseStyle={styles.htmlText}
                 />
@@ -84,22 +84,19 @@ export default function QuestionView({ question, selectedAnswers, setSelectedAns
 const styles = StyleSheet.create({
 
     questionViewContainer: {
-        marginTop: 150,
         width: '100%',
-        paddingVertical: 30,
-        paddingHorizontal: 15,
-        //   alignItems: 'center',
-
+        paddingVertical: 8,
+        paddingHorizontal: 6,
     },
 
     webContainer: {
-        maxWidth: 900,
+        maxWidth: 940,
         alignSelf: 'center',
-        paddingHorizontal: 40,
+        paddingHorizontal: 16,
     },
 
     questionContainer: {
-justifyContent: 'center',
+        justifyContent: 'center',
         marginBottom: 30,
     },
 
@@ -114,8 +111,8 @@ justifyContent: 'center',
         width: '100%',
     },
     htmlText: {
-        fontSize: 24,
-        // fontWeight: '600',
+        fontSize: Platform.OS === 'web' ? 24 : 20,
+        color: '#0F172A',
     },
 
 })

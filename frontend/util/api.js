@@ -6,7 +6,7 @@ import { router, useRouter } from "expo-router";
 
 const api = axios.create({
     baseURL: 'https://testora-backend.onrender.com/api',
-    timeout: 15000,
+    timeout: 1200000,
     headers: {
         'X-Client-Type': Platform.OS == 'web' ? 'web' : 'mobile'
     },

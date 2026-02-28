@@ -1,11 +1,9 @@
-import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native'
+import { View, Text, Pressable, StyleSheet, useWindowDimensions, Platform } from 'react-native'
 import React, { useState } from 'react'
 import { Ionicons, MaterialCommunityIcons, Feather, Entypo } from '@expo/vector-icons';
 import Colors from '../../styles/Colors';
 import { IconButton, Menu } from 'react-native-paper';
 import { router, useGlobalSearchParams } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
 import { AppMediumText } from '../../styles/fonts';
 
 export default function StudentTest({ data }) {
@@ -15,9 +13,22 @@ export default function StudentTest({ data }) {
     const closeMenu = () => setMenuVisible(false);
     const { width } = useWindowDimensions();
 
-    const { classroomId, testId } = useGlobalSearchParams();
+    const { classroomId } = useGlobalSearchParams();
 
-    function handleStart() {
+    async function requestFullscreenOnStart() {
+        if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+        if (!document.documentElement?.requestFullscreen) return;
+        if (document.fullscreenElement) return;
+
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (err) {
+            console.log('Fullscreen request failed:', err);
+        }
+    }
+
+    async function handleStart() {
+        await requestFullscreenOnStart();
         router.replace({
             pathname: 'student/[classroomId]/test/[testId]/start',
             params: {
@@ -266,6 +277,5 @@ newText: {
     fontWeight: "600",
 }
 });
-
 
 

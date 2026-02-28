@@ -1,4 +1,5 @@
 import { View, StyleSheet, ScrollView, useWindowDimensions, Pressable, Platform } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useEffect, useState } from 'react'
 import Colors from '../../styles/Colors'
 import LabeledInput from './LabledInput'
@@ -84,6 +85,9 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
 
 
     const { width } = useWindowDimensions();
+    const isSmall = width <= 480;
+    const isMedium = width > 480 && width <= 861;
+    const isLarge = width >= 1200;
     function validateInput() {
         setError("")
         if (questionText.trim() === "") {
@@ -117,98 +121,109 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
 
     const isEditMode = mode === 'editQuestion';
     defaultQuestion = isEditMode ? defaultQuestion : {};
+    const containerResponsiveStyle = [
+        styles.modalContainer,
+        isMedium && { maxWidth: 800, marginHorizontal: 'auto', width: '100%' },
+        isLarge && { width: '50%', minWidth: 700, marginHorizontal: 'auto' },
+        !isSmall && !isMedium && !isLarge && { maxWidth: 900, marginHorizontal: 'auto' },
+        isSmall && { paddingTop: 8, paddingBottom: 8 }
+    ];
+
     return (
-        <View style={[styles.modalContainer, width > 861 && { maxWidth: 800, margin: 'auto', width: '100%' }]}>
+        <SafeAreaView edges={['top', 'bottom']} style={containerResponsiveStyle}>
             <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                    <AntDesign name='question-circle' size={24} color={Colors.primaryColor} />
-                    <AppBoldText style={styles.modalHeadText} >{isEditMode ? 'Edit ' : "New "} Question</AppBoldText>
+                    <View style={styles.headerLeft}>
+                        <AntDesign name='question-circle' size={24} color={Colors.primaryColor} />
+                        <AppBoldText style={styles.modalHeadText} >{isEditMode ? 'Edit ' : "New " } Question</AppBoldText>
+                    </View>
+                    <Pressable onPress={onCancel} style={styles.closeBtn} accessibilityLabel="close">
+                        <AntDesign name='close' size={20} color={Colors.borderColor} />
+                    </Pressable>
                 </View>
+
                 <View>
                     <View style={styles.questionTypeModal} >
-                        <View style={{ justifyContent: 'space-between', flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                            <View style={{ gap: 10 }}>
+                        <View style={[styles.rowSpaceBetween, isSmall && styles.wrapChildren]}>
+                            <View style={styles.colLeft}>
                                 <AppSemiBoldText style={{ fontSize: 16 }} >Question type</AppSemiBoldText>
                                 <MenuDropdown options={options} backgroundColor={Colors.bgColor} selected={selectedType} setSelected={setSelectedType} />
                             </View>
-                            <LabeledInput onChangeText={setQuestionMark} label={'Marks'} placeholder={'0'}
-                                customInputStyles={{ width: 50 }}
-                                inputType={'numeric'}
-                                defaultValue={isEditMode ? String(defaultQuestion.marks) : "0"}
-                            />
+                            <View style={styles.marksInputWrapper}>
+                                <LabeledInput onChangeText={setQuestionMark} label={'Marks'} placeholder={'0'}
+                                    customInputStyles={{ width: isSmall ? 60 : 80 }}
+                                    inputType={'numeric'}
+                                    defaultValue={isEditMode ? String(defaultQuestion.marks) : "0"}
+                                />
+                            </View>
                         </View>
                     </View>
                     <View style={{ marginVertical: 10 }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                             <AppSemiBoldText style={{ fontSize: 14 }} >Question prompt</AppSemiBoldText>
                             {selectedType.value === 'FILL_BLANK' && (
-                                <View style={{ flexDirection: 'row', gap: 20 }}>
+                                <View style={styles.addBlankActions}>
                                     <Pressable style={styles.addBlankBtn} onPress={addNewTextPart} >
                                         <AppRegularText style={{ color: Colors.white, fontWeight: '600' }}>+  Add TextPart</AppRegularText>
                                     </Pressable>
-                                    <Pressable style={styles.addBlankBtn} onPress={addNewBlankPart} >
+                                    <Pressable style={[styles.addBlankBtn, { marginLeft: 12 }]} onPress={addNewBlankPart} >
                                         <AppRegularText style={{ color: Colors.white, fontWeight: '600' }}>+  Add Blank</AppRegularText>
                                     </Pressable>
                                 </View>
-                            )
-                            }
+                            )}
                         </View>
-                        {
-                            selectedType.value != 'FILL_BLANK' && (
-                                <LabeledTextArea onChangeText={setQuestionText} placeholder={'Type here'} label={''}
-                                    defaultValue={isEditMode ? defaultQuestion.questionText : questionText} />
-                            )
-                        }
+
+                        {selectedType.value != 'FILL_BLANK' && (
+                            <LabeledTextArea onChangeText={setQuestionText} placeholder={'Type here'} label={''}
+                                defaultValue={isEditMode ? defaultQuestion.questionText : questionText} />
+                        )}
                     </View>
+
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingBottom: 30 }}
                         style={{ marginVertical: 10, maxHeight: selectedType.value == "FILL_BLANK" ? 400 : 250 }}
                     >
-                        {
-                            (() => {
-                                switch (selectedType.value) {
-                                    case 'MCQ':
-                                        return (
-                                            <MCQComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
-                                        );
-                                    case 'SINGLE':
-                                        return (
-                                            <SingleComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
-                                        );
-                                    case 'BOOLEAN':
-                                        return (
-                                            <BooleanComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
-                                        );
-                                    case 'FILL_BLANK':
-                                        return (
-                                            // <AppBoldText>Fill Blank</AppBoldText>
-                                            <FillBlankComponent giveOptionMarks={giveOptionMarks} textParts={textParts}
-                                                setTextParts={setTextParts} defaultTextParts={convertFillBlank(defaultQuestion)}
-                                                questionText={questionText} setQuestionText={setQuestionText}
-                                                setMakeAllCaseSensitive={setMakeAllCaseSensitive}
-                                                makeAllCaseSensitive={makeAllCaseSensitive} />
-                                        );
-                                    default:
-                                        return (
-                                            <MatchingComponents defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
-                                        )
-                                }
-                            })()
-                        }
-                    </ScrollView>
-                    <View>
-                        <View style={{ justifyContent: 'flex-end', flexDirection: 'row' }}>
-                            {
-                                selectedType.value == 'FILL_BLANK' && (
-                                    <Checkbox.Item
-                                        label="All case sensitive"
-                                        status={makeAllCaseSensitive ? 'checked' : 'unchecked'}
-                                        onPress={() => setMakeAllCaseSensitive(!makeAllCaseSensitive)}
-                                        color="blue"
-                                    />
-                                )
+                        {(() => {
+                            switch (selectedType.value) {
+                                case 'MCQ':
+                                    return (
+                                        <MCQComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                    );
+                                case 'SINGLE':
+                                    return (
+                                        <SingleComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                    );
+                                case 'BOOLEAN':
+                                    return (
+                                        <BooleanComponent defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                    );
+                                case 'FILL_BLANK':
+                                    return (
+                                        <FillBlankComponent giveOptionMarks={giveOptionMarks} textParts={textParts}
+                                            setTextParts={setTextParts} defaultTextParts={convertFillBlank(defaultQuestion)}
+                                            questionText={questionText} setQuestionText={setQuestionText}
+                                            setMakeAllCaseSensitive={setMakeAllCaseSensitive}
+                                            makeAllCaseSensitive={makeAllCaseSensitive} />
+                                    );
+                                default:
+                                    return (
+                                        <MatchingComponents defaultOptions={defaultQuestion.options} options={questionOptions} setOptions={setQuestionOptions} giveOptionMarks={giveOptionMarks} />
+                                    )
                             }
+                        })()}
+                    </ScrollView>
+
+                    <View>
+                        <View style={{ justifyContent: 'flex-end', flexDirection: 'row', flexWrap: 'wrap' }}>
+                            {selectedType.value == 'FILL_BLANK' && (
+                                <Checkbox.Item
+                                    label="All case sensitive"
+                                    status={makeAllCaseSensitive ? 'checked' : 'unchecked'}
+                                    onPress={() => setMakeAllCaseSensitive(!makeAllCaseSensitive)}
+                                    color="blue"
+                                />
+                            )}
                             <Checkbox.Item
                                 label="Give option marks"
                                 status={giveOptionMarks ? 'checked' : 'unchecked'}
@@ -217,18 +232,14 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                             />
                         </View>
                     </View>
-                    {
-                        error !== "" && (
-                            <View>
-                                <AppSemiBoldText style={{ color: 'red', textAlign: 'center' }}>{error}</AppSemiBoldText>
-                            </View>
-                        )
-                    }
-                    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 20, alignItems: 'center' }}>
-                        <Pressable style={styles.cancelBtn} onPress={onCancel} >
-                            <AppRegularText>Cancel</AppRegularText>
-                        </Pressable>
 
+                    {error !== "" && (
+                        <View>
+                            <AppSemiBoldText style={{ color: 'red', textAlign: 'center' }}>{error}</AppSemiBoldText>
+                        </View>
+                    )}
+
+                    <View style={[styles.footerRow, isSmall && { flexDirection: 'column-reverse', alignItems: 'stretch' }]}>
                         <Pressable style={styles.addBtn} onPress={() => {
                             if (selectedType.value != "FILL_BLANK" && validateInput()) {
                                 onConfirm({
@@ -257,17 +268,13 @@ export default function QuestionEditor({ onConfirm, onCancel, mode, defaultQuest
                                 } : makeBlankQuestionPayload(questionMark, textParts), false)
                                 onCancel();
                             }
-                        }
-                        }>
+                        }}>
                             <AppRegularText style={{ color: Colors.white }}>{isEditMode ? 'Update ' : 'Add '} Question</AppRegularText>
                         </Pressable>
                     </View>
                 </View>
-
-
             </View>
-
-        </View>
+        </SafeAreaView>
     )
 }
 
@@ -400,9 +407,9 @@ const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: 'white',
         borderRadius: 8,
-        padding: 20,
+        padding: 16,
         elevation: 6,
-        gap: 20,
+        // spacing handled by margins on children
         // width : 400,
         // maxWidth : 1000,
         // width : '100%',
@@ -415,8 +422,8 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.borderColor,
         marginBottom: 10,
         flexDirection: 'row',
-        gap: 10,
-        justifyContent: 'center',
+        paddingRight: 8,
+        justifyContent: 'space-between',
         alignItems: 'center',
     },
     modalHeadText: {
@@ -427,23 +434,29 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 10,
+        alignItems: 'center'
     },
     modalContainer: {
         paddingHorizontal: 10,
     },
     cancelBtn: {
         backgroundColor: '#ddd',
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
         borderRadius: 5,
-        width: 100,
+        minWidth: 90,
         alignItems: 'center',
+        marginTop: 10,
     },
     addBtn: {
         backgroundColor: Colors.primaryColor,
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         borderRadius: 5,
-        width: 170,
+        minWidth: 120,
         alignItems: 'center',
+        marginLeft: 12,
+        marginTop: 10,
     },
     addBlankBtn: {
         backgroundColor: Colors.primaryColor,
@@ -452,4 +465,38 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
     },
+    headerLeft: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    closeBtn: {
+        padding: 6,
+        borderRadius: 6,
+    },
+    rowSpaceBetween: {
+        justifyContent: 'space-between',
+        flexDirection: 'row',
+        flex: 1,
+        alignItems: 'center'
+    },
+    wrapChildren: {
+        flexWrap: 'wrap'
+    },
+    colLeft: {
+        // ensure dropdown and label stack nicely
+        marginRight: 12
+    },
+    marksInputWrapper: {
+        justifyContent: 'center'
+    },
+    addBlankActions: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    footerRow: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 20,
+        alignItems: 'center'
+    }
 });
