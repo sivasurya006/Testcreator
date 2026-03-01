@@ -77,17 +77,28 @@ export default function StudentLayout() {
             />
 
             <Tabs.Screen
-                name="settings"
+                name="studentTestSubmissions"
                 options={{
-                    title: 'Settings',
+                    title: 'Submissions',
                     tabBarIcon: ({ color }) => (
-                        <MaterialIcons name="settings" size={24} color={color} />
+                        <MaterialCommunityIcons
+                            name="file-document-check-outline"
+                            size={24}
+                            color={color}
+                        />
                     ),
-                    href: null
                 }}
             />
+        
+                <Tabs.Screen name='studentSubmission' 
+                    options={{
+                        href:null
+                    }}
+                />
 
         </Tabs>
+
+        
 
         // </SafeAreaView>
     )

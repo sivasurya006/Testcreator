@@ -18,7 +18,8 @@ import com.testcreator.util.Queries;
 public class StudentTestDao {
 
 	private Connection connection;
-    List<TestDto> tests=new LinkedList<TestDto>();
+	List<TestDto> tests = new LinkedList<TestDto>();
+
 	public StudentTestDao() throws SQLException {
 		try {
 			this.connection = DBConnectionMaker.getInstance(ServletActionContext.getServletContext()).getConnection();
@@ -26,37 +27,65 @@ public class StudentTestDao {
 			throw new SQLException("Driver not found");
 		}
 	}
-	
+
 	public List<TestDto> getNewTests(int classroomId, int userId) throws SQLException {
 		TestDto testDto;
 		try (PreparedStatement selectTest = connection.prepareStatement(Queries.selectStudentTests)) {
 			selectTest.setInt(1, userId);
 			selectTest.setInt(2, classroomId);
-			System.out.println("userid" + userId);
 			try (ResultSet rs = selectTest.executeQuery()) {
-				while(rs.next()) {
+				while (rs.next()) {
 					testDto = new TestDto();
 
 					testDto.setTestId(rs.getInt("testId"));
 
 					testDto.setTestId(rs.getInt("testId"));
 					testDto.setTestTitle(rs.getString("testTitle"));
-					testDto.setCorrectionMethod(CorrectionMethod.valueOf(rs.getString("correction_type").toUpperCase()));
+					testDto.setCorrectionMethod(
+							CorrectionMethod.valueOf(rs.getString("correction_type").toUpperCase()));
 					int maxAttempts = rs.getInt("maximum_attempts");
-					System.out.println("maxattemp"+maxAttempts);
 					int attemptCount = (rs.getInt("attemptCount"));
 					int remainingAttempts = maxAttempts - attemptCount;
 					testDto.setRemainingAttempts(remainingAttempts);
-					System.out.println(remainingAttempts);
 					testDto.setMaximumAttempts(maxAttempts);
 					testDto.setCreatorName(rs.getString("creatorName"));
 					testDto.setAttemptCount(attemptCount);
+					testDto.setCreatedAt(rs.getTimestamp("createdAt").toInstant().getEpochSecond());
+					testDto.setAttemptedTestStatus(rs.getString("status"));
+//					testDto.setAttemptId(rs.getInt("attemptId"));
+					testDto.setUserId(rs.getInt("userId"));
+					System.out.println("in dao"+rs.getInt("userId"));
 					if (rs.getBoolean("is_timed")) {
 						testDto.setDurationMinutes(rs.getInt("duration_minutes"));
 					}
-					System.out.println("attemot"+testDto.getMaximumAttempts());
 					this.tests.add(testDto);
-                     
+
+				}
+			}
+		}
+		return tests;
+	}
+
+	public List<TestDto> getStudentSubmittedTests(int classroomId, int userId) throws SQLException {
+		TestDto submittedtTest;
+		try (PreparedStatement selectTest = connection.prepareStatement(Queries.getStudentSubmittedTest)) {
+			selectTest.setInt(2, userId);
+			selectTest.setInt(1, classroomId);
+			System.out.println("userid" + userId);
+			try (ResultSet rs = selectTest.executeQuery()) {
+				while (rs.next()) {
+					submittedtTest = new TestDto();
+
+					submittedtTest.setTestTitle(rs.getString("title"));
+					submittedtTest.setAttemptCount(rs.getInt("attemptCount"));
+					submittedtTest.setCreatedAt(rs.getTimestamp("created_at").toInstant().getEpochSecond());
+					submittedtTest.setTestId(rs.getInt("test_id"));
+					submittedtTest.setClassroomId(rs.getInt("classroom_id"));
+//					submittedtTest.setAttemptId(rs.getInt("attempt_id"));
+					submittedtTest.setUserId(rs.getInt("userId"));
+
+					this.tests.add(submittedtTest);
+
 				}
 			}
 		}

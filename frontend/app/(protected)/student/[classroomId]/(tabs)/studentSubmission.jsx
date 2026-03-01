@@ -1,17 +1,20 @@
-import { View, StyleSheet, FlatList } from 'react-native'
-import { useEffect, useState } from 'react'
-import Colors from '../../../../../../styles/Colors'
-import SubmissionsHeader from '../../../../../../src/components/submissions/SubmissionsHeader'
+import { View, Text, StyleSheet } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import Colors from '../../../../../styles/Colors'
+import SubmissionsHeader from '../../../../../src/components/submissions/SubmissionsHeader'
 import { ActivityIndicator } from 'react-native-paper';
-import api from '../../../../../../util/api';
+import api from '../../../../../util/api';
 import { useGlobalSearchParams } from 'expo-router';
-import AttemptCard from '../../../../../../src/components/submissions/AttemptCard';
-import GradeScreen from '../../../../../../src/screens/GradeScreen';
-import DetailedTestReport from '../../../../../../src/components/DetailedTestReport';
-import { AppSemiBoldText } from '../../../../../../styles/fonts';
-import LoadingScreen from '../../../../../../src/components/LoadingScreen';
+import AttemptCard from '../../../../../src/components/submissions/AttemptCard';
+import { FlatList } from 'react-native-gesture-handler';
+import GradeScreen from '../../../../../src/screens/GradeScreen';
+import DetailedTestReport from '../../../../../src/components/DetailedTestReport';
+import { AppSemiBoldText } from '../../../../../styles/fonts';
 
 export default function StudentSubmissions() {
+
+
+
 
   const [data, setData] = useState(null);
   const [filteredData, setFilteredData] = useState();
@@ -27,45 +30,44 @@ export default function StudentSubmissions() {
   const [reportData, setReportData] = useState([]);
   const [attemptId, setAttemptId] = useState(null);
 
+
   const { classroomId, testId } = useGlobalSearchParams();
 
   async function handleGrade(attemptId) {
-    setIsLoading(true);
     const answer = await getAnswerSheet(classroomId, testId, attemptId);
     setAnswerSheet(answer);
-    setAttemptId(attemptId)
-    setGradeScreenOpen(true)
-    setIsLoading(false);
+    setAttemptId(attemptId);
+    setGradeScreenOpen(true);
   }
 
   async function handleShowReport(attemptId) {
-    setIsLoading(true);
     const report = await getTestReport(classroomId, testId, attemptId);
     setReportData(report);
     setAttemptId(attemptId)
     setResultPageOpen(true)
-    setIsLoading(false);
   }
 
   useEffect(() => {
     const get = async () => {
       setIsLoading(true);
-      const data = await getStudentAttempts(params.classroomId, params.testId, params.student);
-
-      console.log(data)
-
+      const data = await getStudentAttempts(params.classroomId, params.testId, params.student || null);
       setData(data);
+      console.log("data in submission page", data);
       setIsLoading(false);
+
     };
 
     get();
-  }, []);
+  }, [params.student, params.classroomId, params.testId]);
 
 
 
   useEffect(() => {
     if (!data) return;
     const filtered = data?.attempts?.filter(attempt => attempt.status === selected);
+    console.log("filtered ", filtered);
+    console.log("attempts",data.attempts)
+    console.log("data",data)
     setFilteredData(filtered);
   }, [selected, data]);
 
@@ -98,6 +100,13 @@ export default function StudentSubmissions() {
   }, [data])
 
 
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size={'large'} />
+      </View>
+    )
+  }
 
 
   function onExit() {
@@ -118,20 +127,24 @@ export default function StudentSubmissions() {
     return <DetailedTestReport noModal={true} totalMarks={reportData.totalMarks} onExit={onExit} isResultPageOpen={isResultPageOpen} questions={reportData.questions} />
 
   }
-
-  // console.log(data)
+  console.log("PARAMS:", params);
+  console.log("classroomId:", params.classroomId);
+  console.log("testId:", params.testId);
+  console.log("student:", params.student);
+  console.log("filderdata", filteredData)
 
   return (
     <View style={styles.container}>
-      <LoadingScreen visible={isLoading} />
+
+      
       <SubmissionsHeader data={{ email: data?.userEmail, name: data?.userName }} selected={selected} setSelected={setSelected}
-        performanceChartData={performanceChartData}
+        performanceChartData={performanceChartData} isStudent={true}
       />
       {
         filteredData?.length == 0 ? (
-          <View style={{flex:1,alignItems:'center',justifyContent:'center'}}>
-             <AppSemiBoldText>No Attempts</AppSemiBoldText>
-            </View>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <AppSemiBoldText>No Attempts</AppSemiBoldText>
+          </View>
         ) : (
           <FlatList
             data={filteredData}
@@ -155,21 +168,45 @@ const styles = StyleSheet.create({
 })
 
 
+// async function getStudentAttempts(classroomId, testId, studentId) {
+//   try {
+//     const result = await api.get(`/api/tests/testAttempt?student=${studentId}`, {
+//       headers: {
+//         'X-ClassroomId': classroomId,
+//         'X-TestId': testId
+//       },
+//             params: studentId ? { student: studentId } : {}
+//     });
+
+//     if (result.status == 200 && result.data) {
+//       return result.data
+//     }
+
+//   } catch (err) {
+//     console.log("can't get attempts", err.response?.data)
+//   }
+
+//   return [];
+// }
+
+
+
 async function getStudentAttempts(classroomId, testId, studentId) {
   try {
-    const result = await api.get(`/api/tests/testAttempt?student=${studentId}`, {
+    const result = await api.get(`/api/tests/studentTestAttempt?student=${studentId}`, {
       headers: {
         'X-ClassroomId': classroomId,
         'X-TestId': testId
-      }
+      },
+      // params: studentId ? { student: studentId } : {}
     });
 
     if (result.status == 200 && result.data) {
-      return result.data
+      return result.data;
     }
 
   } catch (err) {
-    console.log("can't get attempts", err.response?.data)
+    console.log("can't get attempts", err.response?.data);
   }
 
   return [];
@@ -199,7 +236,7 @@ async function getAnswerSheet(classroomId, testId, attemptId) {
 
 async function getTestReport(classroomId, testId, attemptId) {
   try {
-    const result = await api.get(`/api/tests/testReport?attempt=${attemptId}`, {
+    const result = await api.get(`/api/tests/TraineeTestReport?attempt=${attemptId}`, {
       headers: {
         'X-ClassroomId': classroomId,
         'X-TestId': testId
@@ -216,5 +253,4 @@ async function getTestReport(classroomId, testId, attemptId) {
 
   return [];
 }
-
 

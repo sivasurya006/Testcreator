@@ -14,13 +14,13 @@ import { ActivityIndicator } from 'react-native-paper'
 import { AppMediumText } from '../../../../../styles/fonts'
 import { Ionicons } from '@expo/vector-icons'
 
-const { width } = Dimensions.get('window')
+const { width } = Dimensions.get('window');
+
 
 export default function StudentTestLists() {
 
     const [allPublishedTests, setPublishedTest] = useState([]);
     const { classroomId } = useGlobalSearchParams();
-
     const [search, setSearch] = useState("");
     const [selectedFilter, setSelectedFilter] = useState("all");
     const [showFilters, setShowFilters] = useState(false);
@@ -48,15 +48,17 @@ export default function StudentTestLists() {
                     return t.attemptCount === 0 && t.maximumAttempts > 0;
 
                 }
+
                 if (selectedFilter === "all") {
                     return true;
                 }
+
                 return true;
             });
 
     }, [allPublishedTests, search, selectedFilter]);
 
-
+    console.log("hi", classroomId);
     useFocusEffect(
         useCallback(() => {
             setLoading(true)
@@ -66,7 +68,7 @@ export default function StudentTestLists() {
         }, [classroomId])
     );
 
-
+    console.log("FlatList Data:", filteredTests);
 
     return (
         <>
@@ -117,6 +119,7 @@ export default function StudentTestLists() {
                             setShowFilters(false);
                         }}
                     >
+
                         <AppMediumText style={{ fontSize: 16 }}>Finished</AppMediumText>
                     </Pressable>
 
@@ -131,20 +134,25 @@ export default function StudentTestLists() {
                             onChangeText={setSearch}
                             style={styles.searchInput}
                         />
+
                     </View>
                 </View>
                 {
+
                     filteredTests.length == 0 ? (
                         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                             <AppMediumText>No Tests Available</AppMediumText>
                         </View>
                     ) : (
                         <FlatList
+
                             data={filteredTests}
                             extraData={filteredTests}
                             keyExtractor={(item) => item.testId.toString()}
-                            renderItem={({ item }) => <StudentTest data={item} />}
-                        />
+                            renderItem={({ item }) => {
+                                console.log("Rendering item:", item);
+                                return <StudentTest data={item} />;
+                            }} />
                     )
                 }
             </SafeAreaView>
@@ -157,7 +165,7 @@ export default function StudentTestLists() {
 
 
 async function getAllPublishedTests(setPublishedTest, classroomId) {
-    console.log("called")
+    console.log("called", classroomId)
     let status;
     try {
         const result = await api.get(`/studenttest/getStudentTests`, {
@@ -168,9 +176,9 @@ async function getAllPublishedTests(setPublishedTest, classroomId) {
         });
         if (result?.status == 200) {
             setPublishedTest(result.data.reverse());
-            console.log(result.data);
+            console.log("published ", result.data);
         } else {
-            Publish
+
             console.log(`can't fetch created classrooms`);
         }
     } catch (err) {

@@ -28,7 +28,7 @@ function getTime(seconds) {
 
 
 
-export default function AttemptCard({ attempt  , handleGrade , handleShowReport }) {
+export default function AttemptCard({ attempt, handleGrade, handleShowReport, isStudent = false }) {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 821;
 
@@ -36,7 +36,8 @@ export default function AttemptCard({ attempt  , handleGrade , handleShowReport 
 
     const { formattedDate: startedDate, formattedTime: startedTime } = getDateTime(attempt.startedAt);
     const { formattedDate: submittedDate, formattedTime: submittedTime } = getDateTime(attempt.submittedAt)
-    const timeTaken = getTime(attempt.timeTaken)  
+    const timeTaken = getTime(attempt.timeTaken)
+    console.log("in Attempt Card", attempt)
     return (
         <View style={styles.card}>
             <View
@@ -87,19 +88,24 @@ export default function AttemptCard({ attempt  , handleGrade , handleShowReport 
                         </View>
 
                     </View>
-                    <TouchableOpacity style={styles.button}
+                    {isStudent ?
+                        null : (
+                            <>
+                                <TouchableOpacity style={styles.button}
 
-                        onPress={() => {
-                            if (attempt.status == 'EVALUATED') {
-                                handleShowReport(attempt.attemptId)
-                            } else {
-                                handleGrade(attempt.attemptId);
-                            }
-                        }}
+                                    onPress={() => {
+                                        if (attempt.status == 'EVALUATED') {
+                                            handleShowReport(attempt.attemptId)
+                                        } else {
+                                            handleGrade(attempt.attemptId);
+                                        }
+                                    }}
 
-                    >
-                        <AppSemiBoldText style={styles.buttonText}>{attempt.status == 'EVALUATED' ? "View Report" : "Grade"}</AppSemiBoldText>
-                    </TouchableOpacity>
+                                >
+                                    <AppSemiBoldText style={styles.buttonText}>{attempt.status == 'EVALUATED' ? "View Report" : "Grade"}</AppSemiBoldText>
+                                </TouchableOpacity>
+                            </>
+                        )}
                 </View>
             </View>
         </View>

@@ -153,7 +153,7 @@
 				<param name="root">successDto</param>
 				<param name="excludeNullProperties">true</param>
 			</result>
-			<interceptor-ref name="apiStack"/>
+			<interceptor-ref name="apiStack" />
 			<interceptor-ref name="classroomIdInterceptor" />
 		</action>
 
@@ -375,6 +375,17 @@
 			<interceptor-ref name="testIdInterceptor" />
 		</action>
 
+		<action name="StudentTestSubmissions"
+			class="com.testcreator.actions.TestAction"
+			method="StudentTestSubmissions">
+			<result name="success" type="json">
+				<param name="root">submittedUsers</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+			<interceptor-ref name="testActionStack" />
+			<interceptor-ref name="testIdInterceptor" />
+		</action>
+
 		<action name="testAttempt"
 			class="com.testcreator.actions.TestAction" method="userTestAttempt">
 			<result name="success" type="json">
@@ -385,8 +396,29 @@
 			<interceptor-ref name="testIdInterceptor" />
 		</action>
 
+
+		<action name="studentTestAttempt"
+			class="com.testcreator.actions.TestAction" method="studentTestAttempt">
+			<result name="success" type="json">
+				<param name="root">userTestAttempt</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+			<interceptor-ref name="testActionStack" />
+			<interceptor-ref name="testIdInterceptor" />
+		</action>
+
 		<action name="testReport"
 			class="com.testcreator.actions.TestAction" method="userTestReport">
+			<result name="success" type="json">
+				<param name="root">report</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+			<interceptor-ref name="testActionStack" />
+			<interceptor-ref name="testIdInterceptor" />
+		</action>
+
+		<action name="TraineeTestReport"
+			class="com.testcreator.actions.TestAction" method="TraineeTestReport">
 			<result name="success" type="json">
 				<param name="root">report</param>
 				<param name="excludeNullProperties">true</param>
@@ -509,7 +541,7 @@
 				<param name="excludeNullProperties">true</param>
 			</result>
 		</action>
-		
+
 		<action name="signout"
 			class="com.testcreator.actions.UserAction" method="signOut">
 			<result name="success" type="json">
@@ -535,6 +567,16 @@
 		<action name="getStudentTests"
 			class="com.testcreator.actions.StudentTestAction"
 			method="getNewTests">
+
+			<result name="success" type="json">
+				<param name="root">testDto</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+
+		</action>
+		<action name="getStudentSubmittedTests"
+			class="com.testcreator.actions.StudentTestAction"
+			method="getStudentSubmittedTests">
 
 			<result name="success" type="json">
 				<param name="root">testDto</param>

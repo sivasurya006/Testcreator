@@ -257,7 +257,7 @@ export default function Dashboard() {
 
                 <View style={styles.chartCardMobile}>
                   <AppBoldText style={styles.sectionTitle}>Submission</AppBoldText>
-                  {lineData.datasets && lineData.datasets.length > 0 ? (
+                  {pieData && pieData.length > 0 ? (
 
                     <PieChart
                       data={pieData}
@@ -370,23 +370,28 @@ export default function Dashboard() {
               <View style={styles.graph1}>
                 <View style={styles.LineCard}>
                   <AppRegularText style={styles.sectionTitle}>Monthly Progress</AppRegularText>
-                  <LineChart
-                    data={lineData}
-                    width={960}
-                    height={400}
-                    chartConfig={chartConfig}
-                    segments={LineChartSegmentMaxValue > 15 ? 5 : LineChartSegmentMaxValue}
+                  {lineData.datasets && lineData.datasets.length > 0 ? (
 
-                    bezier
-                  // fromZero
-                  // segments={Math.max(...lineData.datasets[0].data)}
-                  />
+                    <LineChart
+                      data={lineData}
+                      width={960}
+                      height={400}
+                      chartConfig={chartConfig}
+                      segments={LineChartSegmentMaxValue > 15 ? 5 : LineChartSegmentMaxValue}
+
+                      bezier
+                    // fromZero
+                    // segments={Math.max(...lineData.datasets[0].data)}
+                    />
+                  ) : (
+                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No data available</Text>
+                  )}
 
                 </View>
 
                 <View style={styles.chartCard}>
                   <AppRegularText style={styles.sectionTitle}>Submission Status</AppRegularText>
-                  {pieData.length > 0 ? (
+                  {pieData && pieData.length > 0 ? (
                     <PieChart
                       data={pieData}
                       width={400}

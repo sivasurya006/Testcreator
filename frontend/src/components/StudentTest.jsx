@@ -1,25 +1,20 @@
-import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native'
+import { View, Text, Pressable, StyleSheet, useWindowDimensions, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
-import { Ionicons, MaterialCommunityIcons, Feather, Entypo } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, Feather, Entypo, FontAwesome5 } from '@expo/vector-icons';
 import Colors from '../../styles/Colors';
-import { IconButton, Menu } from 'react-native-paper';
 import { router, useGlobalSearchParams } from 'expo-router';
-import { useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
-import { AppMediumText } from '../../styles/fonts';
+import { AppMediumText, AppSemiBoldText } from '../../styles/fonts';
 
-export default function StudentTest({ data }) {
+export default function StudentTest({ data, isStudentTest = true }) {
 
-    const [isMenuVisible, setMenuVisible] = useState(false);
-    const openMenu = () => setMenuVisible(true);
-    const closeMenu = () => setMenuVisible(false);
+    const { classroomId } = useGlobalSearchParams();
     const { width } = useWindowDimensions();
 
-    const { classroomId, testId } = useGlobalSearchParams();
+    const remaining = data.remainingAttempts;
 
     function handleStart() {
         router.replace({
-            pathname: 'student/[classroomId]/test/[testId]/start',
+            pathname: '/student/[classroomId]/test/[testId]/start',
             params: {
                 classroomId: classroomId,
                 testId: data.testId,
@@ -27,17 +22,42 @@ export default function StudentTest({ data }) {
         });
     }
 
-    // function handleStrategy() {
+    //     function handleGrade() {
+    //     console.log("in handle grade", data.classroomId, data.testId, data.userId)
     //     router.push({
-    //         pathname: '/[classroomId]/(tabs)/test/[testId]/strategy',
+    //         pathname: '/student/[classroomId]/studentSubmission',
     //         params: {
     //             classroomId: data.classroomId,
     //             testId: data.testId,
-    //         },
+    //             student: data.userId
+    //         }
     //     });
     // }
 
-    const remaining = data.remainingAttempts;
+    function handleGrade() {
+        console.log("in handle grade", classroomId, data.testId, data.userId)
+        router.push({
+            pathname: '/student/[classroomId]/studentSubmission',
+            params: {
+                classroomId: classroomId,
+                testId: data.testId,
+                student: data.userId
+            }
+        });
+    }
+
+    function handleShowReport(attemptId) {
+        router.push({
+            pathname: "/student/[classroomId]/test/[testId]/report",
+            params: {
+                classroomId: classroomId,
+                testId: data.testId,
+                attemptId
+            }
+        });
+    }
+
+    const isEvaluated = data.attemptedTestStatus === 'evaluated';
 
     return (
         <View style={styles.wrapper}>
@@ -47,93 +67,130 @@ export default function StudentTest({ data }) {
                     <Ionicons name='clipboard-outline' size={20} color={Colors.primaryColor} />
                     <Text style={styles.title}>{data.testTitle}</Text>
 
-                    {data.maximumAttempts === data.attemptCount && data.maximumAttempts != 0 && (
-                        <View style={styles.finishedBadge}>
-                            <Text style={styles.finishedText}>Finished</Text>
+                    {isStudentTest && (
+                        <>
+                            {data.maximumAttempts === data.attemptCount && data.maximumAttempts !== 0 && (
+                                <View style={styles.finishedBadge}>
+                                    <Text style={styles.finishedText}>Finished</Text>
+                                </View>
+                            )}
+
+                            {remaining > 0 && data.maximumAttempts !== data.remainingAttempts && (
+                                <View style={styles.attemptBadge}>
+                                    <Text style={styles.attemptText}>
+                                        {remaining} Attempts Left
+                                    </Text>
+                                </View>
+                            )}
+
+                            {data.maximumAttempts === data.remainingAttempts && (
+                                <View style={styles.newBadge}>
+                                    <Text style={styles.newText}>New</Text>
+                                </View>
+                            )}
+
+                            {data.attemptCount > 0 && data.maximumAttempts === 0 && (
+                                <View style={styles.newBadge}>
+                                    <Text style={styles.newText}>Attempted</Text>
+                                </View>
+                            )}
+
+
+                        </>
+                    )}
+
+                    {isStudentTest &&
+
+                        <>
+                            <TouchableOpacity
+                                style={[
+                                    styles.button,
+                                    !isEvaluated && { opacity: 0.5 }
+                                ]}
+                                disabled={!isEvaluated}
+                                onPress={() => handleGrade()}
+                            >
+                                <AppSemiBoldText
+                                    style={[
+                                        styles.buttonText,
+                                        !isEvaluated && { color: 'white' }
+                                    ]}
+                                >
+                                    {isEvaluated ? "View" : "View"}
+                                </AppSemiBoldText>
+                            </TouchableOpacity>
+                        </>
+                    }
+
+                    {!isStudentTest && (
+                        <View style={styles.topRight}>
+                            <View style={styles.attemptsContainer}>
+                                <Text style={styles.attemptNumber}>
+                                    {data.attemptCount}
+                                </Text>
+                                <Text style={styles.attemptLabel}>
+                                    Attempts
+                                </Text>
+                            </View>
+
+                            <Pressable style={styles.enter} onPress={handleGrade}>
+                                <FontAwesome5 name="arrow-right" color="white" size={16} />
+                            </Pressable>
                         </View>
                     )}
-                    {remaining > 0 && data.maximumAttempts != data.remainingAttempts && (
-                        <View style={styles.attemptBadge}>
-                            <Text style={styles.attemptText}>
-                                {remaining} Attempts Left
-                            </Text>
-                        </View>
-
-                    )}
-                    
-                    {data.maximumAttempts === data.remainingAttempts && (<View style={styles.newBadge}>
-                        <Text style={styles.newText}>New</Text>
-                    </View>)}
-
-                    {data.attemptCount > 0 && data.maximumAttempts === 0 && (<View style={styles.newBadge}>
-                        <Text style={styles.newText}>Attempted</Text>
-                    </View>)}
-
-                    <Menu
-                        key={isMenuVisible ? 'visible' : 'invisible'}
-                        visible={isMenuVisible}
-                        onDismiss={closeMenu}
-                        anchorPosition='bottom'
-                        anchor={
-                            <IconButton
-                                icon="dots-vertical"
-                                onPress={openMenu}
-                                iconColor='black'
-                            />
-                        }
-                        contentStyle={styles.menuContentStyle}
-                    >
-                        <Menu.Item title="Preview" onPress={() => { closeMenu(); }} titleStyle={styles.menuTitleStyle} />
-                    </Menu>
                 </View>
 
-                <View style={styles.infoRow}>
-                    <View style={{width : 280, flexDirection:'row'}} >
-                        <View style={styles.infoItem}>
-                            <MaterialCommunityIcons name="timer-outline" size={16} />
-                            <Text style={styles.infoText}>
-                                {data.durationMinutes ? `${data.durationMinutes} min` : 'Untimed'}
-                            </Text>
-                        </View>
-
-                        <View style={styles.infoItem}>
-                            <Feather name="repeat" size={16} />
-                            <Text style={styles.infoText}>
-                                {data.maximumAttempts == 0 ? 'Unlimited' : data.maximumAttempts}
-                            </Text>
-                        </View>
-
-                        <View style={styles.infoItem}>
-                            <MaterialCommunityIcons name="check-decagram-outline" size={16} />
-                            <Text style={styles.infoText}>{data.correctionMethod}</Text>
-                        </View>
-                    </View>
-                    <View>
-                        {data.attemptCount != 0 && remaining > 0 ? (
-                            <View style={styles.btnContainer}>
-                                <Pressable style={styles.btnInsideContainer} onPress={handleStart} >
-                                    <Entypo style={{color:'white'}} name="controller-play" size={20} color="black" />
-                                    <AppMediumText style={{color:'white'}} >Reattempt</AppMediumText>
-                                </Pressable>
+                <View style={[
+                    styles.infoRow,
+                    { marginTop: isStudentTest ? 8 : 0 }
+                ]}>                    {isStudentTest && (
+                    <>
+                        <View style={{ width: 280, flexDirection: 'row' }}>
+                            <View style={styles.infoItem}>
+                                <MaterialCommunityIcons name="timer-outline" size={16} />
+                                <Text style={styles.infoText}>
+                                    {data.durationMinutes ? `${data.durationMinutes} min` : 'Untimed'}
+                                </Text>
                             </View>
-                        ) : remaining > 0 || data.maximumAttempts == 0 ? (
+
+                            <View style={styles.infoItem}>
+                                <Feather name="repeat" size={16} />
+                                <Text style={styles.infoText}>
+                                    {data.maximumAttempts === 0 ? 'Unlimited' : data.maximumAttempts}
+                                </Text>
+                            </View>
+
+                            <View style={styles.infoItem}>
+                                <MaterialCommunityIcons name="check-decagram-outline" size={16} />
+                                <Text style={styles.infoText}>{data.correctionMethod}</Text>
+                            </View>
+                        </View>
+
+                        {(remaining > 0 || data.maximumAttempts === 0) && (
                             <View style={styles.btnContainer}>
                                 <Pressable style={styles.btnInsideContainer} onPress={handleStart}>
-                                    <Entypo style={{color:'white'}}  name="controller-play" size={20} color="black" />
-                                    <AppMediumText style={{color:'white'}}>Start</AppMediumText>
+                                    <Entypo name="controller-play" size={20} color="white" />
+                                    <AppMediumText style={{ color: 'white' }}>
+                                        {data.attemptCount !== 0 ? "Reattempt" : "Start"}
+                                    </AppMediumText>
                                 </Pressable>
                             </View>
-                        ) : null}
-                    </View>
-                        {console.log(data.createdAt)}
+                        )}
+                    </>
+                )}
 
-                    {width >= 890 ? (
-                        <View style={styles.createdAt}>
-                            <Text style={styles.date}>
-                                {new Date(data.createdAt * 1000).toLocaleDateString()}
-                            </Text>
-                        </View>
-                    ) : null} 
+                </View>
+                <View
+                    style={[
+                        styles.dateContainer,
+                        isStudentTest
+                            ? styles.dateRight
+                            : styles.dateLeft
+                    ]}
+                >
+                    <Text style={styles.dateText}>
+                        {new Date(data.createdAt * 1000).toLocaleDateString()}
+                    </Text>
                 </View>
 
             </View>
@@ -141,79 +198,54 @@ export default function StudentTest({ data }) {
     );
 }
 
-
 const styles = StyleSheet.create({
-
     wrapper: {
         marginVertical: 8,
         marginHorizontal: 16,
     },
-
+    disabledButton: {
+        backgroundColor: '#D1D5DB', // light gray
+    },
     card: {
         backgroundColor: Colors.white,
         padding: 20,
         borderRadius: 8,
         boxShadow: Colors.blackBoxShadow,
     },
-
     row: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
-
     title: {
         fontSize: 16,
         fontWeight: '600',
         flex: 1,
     },
-
-    draftBadge: {
-        backgroundColor: '#FFF3CD',
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-    },
-
-    draftText: {
-        fontSize: 12,
-        color: '#856404',
-    },
-
     infoRow: {
         flexDirection: 'row',
-        marginTop: 14,
+        marginTop: 8,
         flexWrap: 'wrap',
-        gap: 14,
+        gap: 10,
     },
-
     infoItem: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
         marginRight: 10
     },
-
     infoText: {
         fontSize: 13,
         color: Colors.gray,
     },
-    menuTitleStyle: {
-        color: 'black'
-    },
-    menuContentStyle: {
-        backgroundColor: Colors.bgColor
-    },
     btnContainer: {
-        // marginLeft: 'auto',
         paddingHorizontal: 12,
         paddingVertical: 5,
-        // borderWidth: 0.5,
-        borderRadius : 8,
+        borderRadius: 8,
         width: 130,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor : Colors.primaryColor
+        backgroundColor: Colors.primaryColor
     },
     btnInsideContainer: {
         flexDirection: 'row',
@@ -221,51 +253,106 @@ const styles = StyleSheet.create({
         columnGap: 10,
         width: '100%',
     },
-    createdAt: {
-        alignSelf: 'flex-end',
-        marginLeft: 'auto',
-        marginRight: 15
+    dateContainer: {
+        marginTop: 12,
+        alignItems: 'flex-end',
     },
-    date: {
-        // color : Colors.black
+
+    dateText: {
+        fontSize: 12,
+        color: Colors.gray,
     },
- attemptBadge: {
-    backgroundColor: "#FEF3C7",   // light orange
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-},
-attemptText: {
-    fontSize: 12,
-    color: "#B45309",   // dark amber text
-    fontWeight: "600",
-},
-finishedBadge: {
-    backgroundColor: "#DCFCE7",   // light green
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-},
-finishedText: {
-    color: "#15803D",   // dark green text
-    fontSize: 12,
-    fontWeight: "600",
-},
-newBadge: {
-    backgroundColor: "#DBEAFE",   // light blue
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-},
-newText: {
-    color: "#1D4ED8",   // dark blue text
-    fontSize: 12,
-    fontWeight: "600",
-}
+    attemptBadge: {
+        backgroundColor: "#FEF3C7",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 6,
+    },
+    attemptText: {
+        fontSize: 12,
+        color: "#B45309",
+        fontWeight: "600",
+    },
+    finishedBadge: {
+        backgroundColor: "#DCFCE7",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 6,
+    },
+    finishedText: {
+        color: "#15803D",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    newBadge: {
+        backgroundColor: "#DBEAFE",
+        paddingHorizontal: 18,
+        paddingVertical: 8,
+        borderRadius: 6,
+    },
+    newText: {
+        color: "#1D4ED8",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    rightSide: {
+        marginTop: 15,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%"
+    },
+    attemptsContainer: {
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    attemptNumber: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: Colors.primaryColor,
+
+    },
+    attemptLabel: {
+        fontSize: 13,
+        color: Colors.gray,
+    },
+    enter: {
+        backgroundColor: Colors.primaryColor,
+        height: 30,
+        width: 30,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    button: {
+        backgroundColor: Colors.primaryColor,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 12,
+    },
+    topRight: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        gap: 25,
+    },
+    dateContainer: {
+        marginTop: 12,
+    },
+
+    dateRight: {
+        alignItems: 'flex-end',
+    },
+
+    dateLeft: {
+        alignItems: 'flex-start',
+    },
+
+    dateText: {
+        fontSize: 12,
+        color: Colors.gray,
+    },
 });
-
-
-

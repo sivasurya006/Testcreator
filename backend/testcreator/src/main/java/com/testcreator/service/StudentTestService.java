@@ -21,4 +21,9 @@ public class StudentTestService {
 		return StudentTestDao.getNewTests(context.getClasssroomId(),context.getUserId());
 
 	}
+	public List<TestDto> getStudentSubmittedTests(Context context) throws SQLException {
+		
+		return StudentTestDao.getStudentSubmittedTests(context.getClasssroomId(),context.getUserId());
+
+	}
 }

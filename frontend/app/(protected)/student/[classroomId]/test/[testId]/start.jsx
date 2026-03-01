@@ -36,7 +36,6 @@ export default function Test() {
   const [fullScreenExitWarning, setFullScreenExitWarning] = useState(false);
 
   const selectedAnswersRef = useRef(selectedAnswers);
-  const fullScreenExitCount = useRef(0);
 
   useEffect(() => {
     selectedAnswersRef.current = selectedAnswers;
@@ -114,102 +113,82 @@ export default function Test() {
     }
   }
 
-  // useEffect(() => {
-  //   const detectDevTools = () => {
-  //     const threshold = 160;
 
-  //     if (
-  //       window.outerWidth - window.innerWidth > threshold ||
-  //       window.outerHeight - window.innerHeight > threshold
-  //     ) {
-  //       setTabWarningVisible(true);
-  //       submitAnswer();
-  //     }
-  //   };
-
-  //   window.addEventListener("resize", detectDevTools);
-
-  //   return () => {
-  //     window.removeEventListener("resize", detectDevTools);
-  //   };
-  // }, []);
 
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
 
-    const handleBeforeUnload = (event) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    // const handleKeyDowns = (e) => {
-    //   if (e.key !== 'Escape') return;
-    //   if (!document.fullscreenElement) {
-    //     fullScreenExitCount.current += 1;
-    //     console.log('Escape pressed while not fullscreen, count:', fullScreenExitCount.current);
+    const threshold = 160;
 
-    //     if (fullScreenExitCount.current === 1) {
-    //       shouldAutoFullscreen.current = false;
-    //       setFullScreenExitWarning(true);
-    //     } else if (fullScreenExitCount.current >= 1) {
-    //       submitAnswer();
-    //     }
-    //   }
-    // };
-    // document.addEventListener('keydown', handleKeyDowns);
-
-
-    const handleCopyPaste = (e) => {
-      e.preventDefault();
-    };
-
-    // const handleContextMenu = (e) => {
-    //   e.preventDefault();
-    // };
-
-    const handleKeyDown = (e) => {
-      if (['c', 'v', 'x', 'a', 'i'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
+    const detectDevTools = () => {
+      if (
+        window.outerWidth - window.innerWidth > threshold ||
+        window.outerHeight - window.innerHeight > threshold
+      ) {
+        console.log("DevTools detected");
+        setTabWarningVisible(true);
+        submitAnswer();
       }
     };
 
-    // document.addEventListener('contextmenu', handleContextMenu);
-    document.addEventListener('keydown', handleKeyDown);
+    
+
+
+    const handleTabViolation = () => {
+      if (isResultPageOpen) return;
+
+      tabSwitchCount.current += 1;
+      console.log("Tab violation:", tabSwitchCount.current);
+
+      if (tabSwitchCount.current === 1) {
+        setTabWarningVisible(true);
+      }
+
+      if (tabSwitchCount.current >= 2) {
+        submitAnswer();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        handleTabViolation();
+      }
+    };
+
+    const handleBlur = () => {
+      handleTabViolation();
+    };
+    const handleFullscreenChange = () => {
+      if (isResultPageOpen) return;
+
+      if (!document.fullscreenElement) {
+        fullScreenExitCount.current += 1;
+        console.log("Fullscreen exit count:", fullScreenExitCount.current);
+
+        if (fullScreenExitCount.current === 1) {
+          setFullScreenExitWarning(true);
+        }
+
+        if (fullScreenExitCount.current >= 2) {
+          console.log("Auto submit due to fullscreen exit");
+          submitAnswer();
+        }
+      }
+    };
+
+    const handleCopyPaste = (e) => e.preventDefault();
+    const handleContextMenu = (e) => e.preventDefault();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener('resize', detectDevTools);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('copy', handleCopyPaste);
     document.addEventListener('paste', handleCopyPaste);
     document.addEventListener('cut', handleCopyPaste);
 
-const handleFullscreenChange = () => {
-  if (!document.fullscreenElement) {
-
-    fullScreenExitCount.current += 1;
-
-
-    if (fullScreenExitCount.current === 1) {
-      setFullScreenExitWarning(true);
-    }
-
-    if (fullScreenExitCount.current >= 2) {
-      submitAnswer();
-    }
-  }
-};
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-
-    const onBlur = () => {
-      if (isResultPageOpen) return;
-      handleBlur();
-    };
-
-    const onFocus = () => {
-      if (isResultPageOpen) return;
-      handleFocus();
-    };
-
-    window.addEventListener('blur', onBlur);
-    window.addEventListener('focus', onFocus);
-
+  
   }, []);
 
 
@@ -218,65 +197,9 @@ const handleFullscreenChange = () => {
 
 
   const hiddenStart = useRef(null);
-  const tabSwitchCount = useRef(0);
   const violationPoints = useRef(0);
-  // const pageLoaded = useRef(false);
-const handleBlur = () => {
-  if (isResultPageOpen) return;
-
-  tabSwitchCount.current += 1;
-  console.log("Tab switched:", tabSwitchCount.current);
-
-  if (tabSwitchCount.current === 1) {
-    setTabWarningVisible(true);
-  }
-
-  if (tabSwitchCount.current >= 2) {
-    console.log("Auto submitting due to tab switch");
-    submitAnswer();
-  }
-};
-
-const handleFocus = () => {
-  console.log("User returned to test");
-};
-
-const handleVisibilityChange = () => {
-  if (isResultPageOpen) return;
-
-  if (document.hidden) {
-    console.log("Document hidden");
-    handleBlur();
-  } else {
-    console.log("Document visible");
-    handleFocus();
-  }
-};
-
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-
-
-
-
-  useEffect(() => {
-    if (Platform.OS == 'web') return;
-
-    const appState = useRef(AppState.currentState);
-
-    const handleAppStateChange = (nextAppState) => {
-      if (appState.current === "active" && nextAppState.match(/inactive|background/)) {
-        console.log("User left the app");
-        setTabWarningVisible(true);
-      }
-    };
-
-    const interval = setInterval(detectDevTools, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  
-
+  const tabSwitchCount = useRef(0);
+  const fullScreenExitCount = useRef(0);
 
   async function startNewTest() {
 

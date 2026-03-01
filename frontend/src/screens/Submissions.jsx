@@ -6,7 +6,7 @@ import api from '../../util/api';
 import Colors from '../../styles/Colors';
 import { FontAwesome6 } from '@expo/vector-icons';
 
-export default function StudentSubmissionScreen({ mode = 'submissions', search = '' }) {
+export default function StudentSubmissionScreen({ mode = 'submissions', search = '' ,role=''}) {
 
     const [data, setData] = useState([])
     const { classroomId, testId } = useGlobalSearchParams()
@@ -17,6 +17,9 @@ export default function StudentSubmissionScreen({ mode = 'submissions', search =
         }
         if (mode == 'testSubmissions') {
             getTestSubmissions();
+        }
+        if(role == 'student'){
+            getStudentTestSubmissions();
         }
     }, [classroomId, testId]);
 
@@ -78,8 +81,32 @@ export default function StudentSubmissionScreen({ mode = 'submissions', search =
     };
 
     const getTestSubmissions = async () => {
+        console.log("test submission data",classroomId,testId)
         try {
             const result = await api.get('/api/tests/testSubmissions', {
+                headers: {
+                    'X-ClassroomId': classroomId,
+                    'X-TestId': testId
+                },
+            });
+
+            if (result?.status === 200 && result.data) {
+                setData(result.data);
+                return;
+            } else {
+                console.log("Can't fetch submissions");
+            }
+
+        } catch (err) {
+            console.log("getTestSubmissions err ", err.response?.data);
+        }
+        setData([]);
+    };
+
+        const getStudentTestSubmissions = async () => {
+        console.log("test submission data",classroomId,testId)
+        try {
+            const result = await api.get('/api/tests/StudentTestSubmissions', {
                 headers: {
                     'X-ClassroomId': classroomId,
                     'X-TestId': testId

@@ -28,7 +28,9 @@ public class StudentTestAction extends JsonApiAction implements ServletRequestAw
 	public String getNewTests() {
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
 		int userId = Integer.parseInt((String) request.getAttribute("userId"));
-		System.out.println(userId);
+		System.out.println("new test userid"+userId);
+		System.out.println("new classroomId userid"+classroomId);
+
 		Context context = new Context();
 		context.setClasssroomId(classroomId);
 		context.setUserId(userId);
@@ -59,6 +61,43 @@ public class StudentTestAction extends JsonApiAction implements ServletRequestAw
 		return ERROR;
 	}
 
+	
+	
+
+	public String getStudentSubmittedTests() {
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		System.out.println(userId);
+		Context context = new Context();
+		context.setClasssroomId(classroomId);
+		context.setUserId(userId);
+		
+		
+		
+		try {
+			new AccessService().require(Permission.CLASSROOM_STUDENT, context);
+
+			StudentTestService studentTestService = new StudentTestService();
+
+			this.testDto = studentTestService.getStudentSubmittedTests(context);
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			  e.printStackTrace();
+
+			setError(new ApiError("Authentication failed", 401));
+			return LOGIN;
+			
+		} catch (ClassroomNotNoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+	
 	public List<TestDto> getTestDto() {
 		return testDto;
 	}

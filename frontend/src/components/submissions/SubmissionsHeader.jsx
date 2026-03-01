@@ -9,7 +9,7 @@ import { Modal, Portal } from 'react-native-paper';
 import { LineChart } from 'react-native-chart-kit';
 
 
-export default function SubmissionsHeader({ data, selected, setSelected, performanceChartData }) {
+export default function SubmissionsHeader({ data, selected, setSelected, performanceChartData, isStudent = false }) {
 
 
     const params = useGlobalSearchParams();
@@ -25,16 +25,29 @@ export default function SubmissionsHeader({ data, selected, setSelected, perform
 
             <View style={styles.menu}>
                 <View style={{ justifyContent: 'center', marginRight: 10 }} >
-                    <TouchableOpacity onPress={() => {
-                        router.push({
-                            pathname: '[classroomId]/test',
-                            params: {
-                                classroomId: params.classroomId
-                            }
-                        })
-                    }}>
-                        <Feather name='arrow-left' size={24} />
-                    </TouchableOpacity>
+                    {isStudent ? (
+                        <TouchableOpacity onPress={() => {
+                            router.back();
+
+                        }}>
+                            <Feather name='arrow-left' size={24} />
+                        </TouchableOpacity>
+                    ) :
+
+                        <>
+                            <TouchableOpacity onPress={() => {
+                                router.push({
+                                    pathname: '[classroomId]/test',
+                                    params: {
+                                        classroomId: params.classroomId
+                                    }
+                                })
+                            }}>
+                                <Feather name='arrow-left' size={24} />
+                            </TouchableOpacity>
+                        </>
+
+                    }
                 </View>
                 <Pressable
                     style={[styles.menuItem, selected == 'SUBMITTED' && styles.selectedItem]}

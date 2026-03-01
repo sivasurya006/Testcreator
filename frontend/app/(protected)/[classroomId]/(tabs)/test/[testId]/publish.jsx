@@ -179,12 +179,7 @@ export default function Publish() {
                                     setTestMinutes(30);
                                 }
                             }}
-                            onPress={() => {
-                                setIsTimed(!isTimed);
-                                if (!isTimed) {
-                                    setTestMinutes(30);
-                                }
-                            }}
+                       
                         />
                     </View>
 

@@ -746,6 +746,38 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 		return ERROR;
 	}
 	
+	
+	public String StudentTestSubmissions() {
+
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		int testId = (Integer) request.getAttribute("testId");
+
+		try {
+			TestService testService = new TestService();
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			new AccessService().require(Permission.CLASSROOM_STUDENT, context);
+			this.submittedUsers = testService.getTestSubmissionDetails(classroomId,testId);
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException | QuestionNotFoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+
+	
 	public String userTestReport() {
 
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
@@ -784,6 +816,43 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 	}
 	
 	
+	public String TraineeTestReport() {
+
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		int testId = (Integer) request.getAttribute("testId");
+
+		
+		if(attempt == null) {
+			setError(new ApiError("Invalid attempt Id",400));
+			return INPUT;
+		}
+		
+		
+		try {
+			TestService testService = new TestService();
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			new AccessService().require(Permission.CLASSROOM_STUDENT, context);
+			this.report = testService.getTetsReport(attempt, testId);
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException | QuestionNotFoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+	
 	public String userTestAttempt() {
 
 		int classroomId = (Integer) (request.getAttribute("classroomId"));
@@ -803,6 +872,45 @@ public class TestAction extends JsonApiAction implements ServletRequestAware, Mo
 			context.setClasssroomId(classroomId);
 			context.setUserId(userId);
 			new AccessService().require(Permission.CLASSROOM_TUTOR, context);
+			this.userTestAttempt = testService.getUserTestAttempts(testId, student);
+			return SUCCESS;
+		} catch (UnauthorizedException e) {
+			setError(new ApiError("Authentication failed", 401));
+			e.printStackTrace();
+			return LOGIN;
+		} catch (ClassroomNotNoundException | QuestionNotFoundException e) {
+			setError(new ApiError("No record match", 404));
+			return NOT_FOUND;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		System.out.println("execute ended");
+		setError(new ApiError("server error", 500));
+		return ERROR;
+	}
+	
+	
+	
+	public String studentTestAttempt() {
+
+		int classroomId = (Integer) (request.getAttribute("classroomId"));
+		int userId = Integer.parseInt((String) request.getAttribute("userId"));
+		int testId = (Integer) request.getAttribute("testId");
+
+		
+		if(student == null) {
+			setError(new ApiError("Invalid student Id",400));
+			return INPUT;
+		}
+		
+		
+		try {
+			TestService testService = new TestService();
+			Context context = new Context();
+			context.setClasssroomId(classroomId);
+			context.setUserId(userId);
+			new AccessService().require(Permission.CLASSROOM_STUDENT, context);
 			this.userTestAttempt = testService.getUserTestAttempts(testId, student);
 			return SUCCESS;
 		} catch (UnauthorizedException e) {

@@ -21,8 +21,49 @@ public class TestDto {
 	private CorrectionMethod correctionMethod;
 	private Integer submittedTestCount;
 	private Integer AttemptCountOnTest;
+	private String AttemptedTestStatus;
+	private int attemptId;
+	private int userId;
 	
 	
+	public int getUserId() {
+		return userId;
+	}
+
+
+
+	public void setUserId(int userId) {
+		System.out.println("in dto"+userId);
+
+		this.userId = userId;
+	}
+
+
+
+	public int getAttemptId() {
+		return attemptId;
+	}
+
+
+
+	public void setAttemptId(int attemptId) {
+		this.attemptId = attemptId;
+	}
+
+
+
+	public String getAttemptedTestStatus() {
+		return AttemptedTestStatus;
+	}
+
+
+
+	public void setAttemptedTestStatus(String attemptedTestStatus) {
+		AttemptedTestStatus = attemptedTestStatus;
+	}
+
+
+
 	public Integer getSubmittedTestCount() {
 		return submittedTestCount;
 	}
