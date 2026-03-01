@@ -1,15 +1,13 @@
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native'
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { AntDesign, Ionicons } from '@expo/vector-icons'
 import Colors from '../../../styles/Colors'
 import { fonts } from '../../../styles/fonts'
 import ConfirmModal from '../modals/ConfirmModal'
-import { useGlobalSearchParams } from 'expo-router'
 
-export default function TestHeader({ data, onExit, onSubmit, onTimeEnd }) {
+export default function TestHeader({ data, onExit, onSubmit, onTimeEnd , forceSubmit }) {
   const [timeLeft, setTimeLeft] = useState(data.duration * 60);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const { classroomId } = useGlobalSearchParams();
 
   useEffect(() => {
     if (!data.duration) return;
@@ -38,126 +36,120 @@ export default function TestHeader({ data, onExit, onSubmit, onTimeEnd }) {
     setConfirmModalVisible(true);
   }
 
-  const isWeb = Platform.OS === 'web';
+  const { width } = useWindowDimensions();
+  const isWide = width >= 760;
 
   return (
-    <View style={[styles.container, isWeb ? styles.webContainer : styles.mobileContainer]}>
-      {isWeb ? (
-        <>
-          <Pressable style={{zIndex:10}} onPress={handleCloseTest}>
-            <AntDesign name="close" size={24} color="black" />
+    <View style={styles.wrapper}>
+      <View style={[styles.container, isWide ? styles.row : styles.column]}>
+        <View style={styles.leftSection}>
+          <Pressable onPress={handleCloseTest} style={styles.closeBtn}>
+            <AntDesign name="close" size={20} color={Colors.secondaryColor} />
           </Pressable>
-          <View style={styles.webTitleContainer}>
-            <Text style={styles.testTitle}>{data.title}</Text>
-          </View>
-          <View style={styles.rightSection}>
-            {data.duration && (
-              <View style={styles.timerContainer}>
-                <Ionicons name='timer-outline' size={30} />
-                <Text style={[styles.timer, timeLeft <= 60 && { color: 'red' }]}>{formatTime(timeLeft)}</Text>
-              </View>
-            )}
-            <Pressable style={styles.primaryButton} onPress={onSubmit}>
-              <Text style={styles.primaryButtonText}>Submit</Text>
-            </Pressable>
-          </View>
-        </>
-      ) : (
-        <>
-          <View style={styles.mobileTitleContainer}>
-            <Text style={styles.testTitle}>{data.title}</Text>
-          </View>
-          <View style={styles.mobileRow}>
-            <Pressable onPress={handleCloseTest}>
-              <AntDesign name="close" size={24} color="black" />
-            </Pressable>
-            {data.duration && (
-              <View style={styles.timerContainer}>
-                <Ionicons name='timer-outline' size={30} />
-                <Text style={[styles.timer, timeLeft <= 60 && { color: 'red' }]}>{formatTime(timeLeft)}</Text>
-              </View>
-            )}
-            <Pressable style={styles.primaryButton} onPress={onSubmit}>
-              <Text style={styles.primaryButtonText}>Submit</Text>
-            </Pressable>
-          </View>
-        </>
-      )}
+          <Text numberOfLines={1} style={[styles.testTitle, !isWide && { fontSize: 18 }]}>
+            {data.title}
+          </Text>
+        </View>
+
+        <View style={[styles.rightSection, !isWide && styles.narrowRight]}>
+          {data.duration && (
+            <View style={styles.timerContainer}>
+              <Ionicons name='timer-outline' size={20} color={Colors.secondaryColor} />
+              <Text style={[styles.timer, timeLeft <= 60 && { color: '#DC2626' }]}>{formatTime(timeLeft)}</Text>
+            </View>
+          )}
+          <Pressable style={styles.primaryButton} onPress={onSubmit}>
+            <Text style={styles.primaryButtonText}>Submit</Text>
+          </Pressable>
+        </View>
+      </View>
 
       <ConfirmModal
-        onConfirm={onExit}
+        onConfirm={ async () => {
+           setConfirmModalVisible(false);
+          await forceSubmit();
+          onExit();
+        }}
         onCancel={() => setConfirmModalVisible(false)}
         visible={confirmModalVisible}
         message={"Exit test?\nIf you leave now, your current progress will not be saved."}
       />
     </View>
-  )
+  );
 }
 
+
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomColor: '#ccc',
-  },
-  webContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  wrapper: {
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    justifyContent: 'space-between',
+    borderBottomColor: Colors.borderColor,
   },
-  mobileContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    borderBottomWidth: 0,
+  container: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  webTitleContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  mobileTitleContainer: {
-    marginBottom: 12,
-  },
-  mobileRow: {
+  row: {
     flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-around',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  column: {
+    gap: 12,
+  },
+  leftSection: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    minWidth: 0,
+    flex: 1,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.bgColor,
   },
   testTitle: {
     fontFamily: fonts.bold,
-    fontSize: 24,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontSize: 20,
+    color: Colors.secondaryColor,
+    flexShrink: 1,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
-    marginLeft: 'auto',
+    gap: 10,
+  },
+  narrowRight: {
+    justifyContent: 'space-between',
   },
   timerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: Colors.bgColor,
   },
   timer: {
-    fontSize: 20,
+    fontSize: 15,
     fontFamily: fonts.bold,
-    color: Colors.black,
+    color: Colors.secondaryColor,
   },
   primaryButton: {
     backgroundColor: Colors.primaryColor,
-    paddingVertical: 18,
-    paddingHorizontal: 35,
-    borderRadius: 25,
-    marginLeft: 10, 
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 22,
   },
   primaryButtonText: {
     color: Colors.white,
-    fontFamily: fonts.regular,
+    fontFamily: fonts.medium,
+    fontSize: 14,
   },
 });

@@ -3,10 +3,9 @@ import React, { use, useEffect, useState } from 'react'
 import { Checkbox, Icon, IconButton, Menu, Modal, Portal, Tooltip } from 'react-native-paper';
 import { router, location, useGlobalSearchParams } from 'expo-router';
 import api from '../../../../../../util/api';
-import { AntDesign } from '@expo/vector-icons';
 import Colors from '../../../../../../styles/Colors';
 import { AppBoldText, AppMediumText, AppRegularText } from '../../../../../../styles/fonts';
-import { FA5Style } from '@expo/vector-icons/build/FontAwesome5';
+import LoadingScreen from '../../../../../../src/components/LoadingScreen';
 
 export default function Publish() {
 
@@ -24,6 +23,7 @@ export default function Publish() {
     const [maximumAttempts, setMaximumAttempts] = useState(0);
     const [showAttemptInput, setShowAttemptInput] = useState(false);
     const [showInfo, setShowInfo] = useState(false);
+    const [ isLoading, setIsLoading] = useState(false); 
 
     const { width } = useWindowDimensions();
 
@@ -39,12 +39,14 @@ export default function Publish() {
 
     async function handlePublish() {
         if (validateInput()) {
+            setIsLoading(true);
             const success = await publishTest(testId, classroomId, Boolean(isTimed), correctionType, Number(testMinutes), Number(maximumAttempts),);
             if (success) {
                 handleCancel();
             } else {
                 console.log('test not published');
             }
+            setIsLoading(false);
         }
     }
 
@@ -86,6 +88,7 @@ export default function Publish() {
 
     return (
         <View style={styles.container}>
+            <LoadingScreen visible={isLoading} />
             <View style={styles.form}>
                 <View style={[width > 861 ? styles.pageHeader : null]}>
                     <AppBoldText style={styles.header}>Publish Test</AppBoldText>
@@ -179,7 +182,6 @@ export default function Publish() {
                                     setTestMinutes(30);
                                 }
                             }}
-                       
                         />
                     </View>
 
@@ -197,7 +199,6 @@ export default function Publish() {
                                 keyboardType='numeric'
                                 onChangeText={(text) => setTestMinutes(parseInt(text) || 0)}
                             />
-                            <AppRegularText>Minutes</AppRegularText>
                             <AppRegularText>Minutes</AppRegularText>
                         </View>
                     )}
@@ -266,7 +267,6 @@ export default function Publish() {
                         onPress={handlePublish}
                     >
                         <AppRegularText style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
-                            Publish
                             Publish
                         </AppRegularText>
                     </Pressable>

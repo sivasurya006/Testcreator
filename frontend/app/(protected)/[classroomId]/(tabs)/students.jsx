@@ -1,227 +1,140 @@
-import { View, Text, StyleSheet, TextInput, Platform, Pressable, Alert } from 'react-native'
-import { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TextInput, Pressable, FlatList, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
 import Colors from '../../../../styles/Colors';
 import { AntDesign, FontAwesome } from '@expo/vector-icons';
 import { fonts } from '../../../../styles/fonts';
-import { Modal, Portal } from 'react-native-paper';
+import { ActivityIndicator, Modal, Portal, Menu, IconButton } from 'react-native-paper';
 import api from '../../../../util/api';
 import { useGlobalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView } from 'react-native';
-import { AppMediumText } from '../../../../styles/fonts';
-import { Menu, IconButton } from 'react-native-paper';
-import StudentListHeader from '../../../../src/screens/studentlist';
-import { FlatList } from 'react-native-gesture-handler';
+import ConfirmModal from '../../../../src/components/modals/ConfirmModal';
 
 export default function StudentList() {
-
   const [studentsList, setStudentsList] = useState([]);
-  const [studentsDelete, setStudentsDelete] = useState([]);
   const [inviteStudentModalVisible, setInviteStudentModalVisible] = useState(false);
-  // track which student's menu is open (userId)
   const [menuVisibleFor, setMenuVisibleFor] = useState(null);
+  const [isFetchingStudents, setIsFetchingStudents] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const { classroomId } = useGlobalSearchParams();
+  const { width } = useWindowDimensions();
+
   const openMenu = (studentId) => setMenuVisibleFor(studentId);
   const closeMenu = () => setMenuVisibleFor(null);
 
-  const { classroomId } = useGlobalSearchParams();
+  const numColumns = width >= 1080 ? 2 : 1;
+  const hasSearchQuery = searchText.trim().length > 0;
+
+  const filteredStudents = useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    if (!query) return studentsList;
+
+    return studentsList.filter((item) => {
+      const name = item?.user?.name?.toLowerCase() || '';
+      const email = item?.user?.email?.toLowerCase() || '';
+      return name.includes(query) || email.includes(query);
+    });
+  }, [studentsList, searchText]);
 
   async function getStudentsList() {
     try {
+      setIsFetchingStudents(true);
       const result = await api.get('/api/students', {
         headers: {
-          'X-ClassroomId': classroomId
-        }
+          'X-ClassroomId': classroomId,
+        },
       });
-      if (result?.status == 200 && result.data) {
+
+      if (result?.status === 200 && result.data) {
         setStudentsList(result.data);
-        console.log("Students List:", result.data);
-      } else {
-        console.log("can't get students list");
       }
     } catch (err) {
-      console.log("getStudentsList", err.response?.data);
+      console.log('getStudentsList', err.response?.data);
+    } finally {
+      setIsFetchingStudents(false);
     }
   }
-
 
   async function deleteStudent(studentId) {
-    try {
-      const result = await api.delete(`/api/deletestudent?studentId=${studentId}`, {
-        headers: { 'X-ClassroomId': classroomId }
-      });
-      if (result?.status == 200 && result.data) {
-        console.log("Deleted student", result.data);
-        getStudentsList();
-      } else {
-        console.log("can't delete student");
-      }
-    } catch (err) {
-      console.log("deleteStudent", err.response?.data);
+    const result = await api.delete(`/api/deletestudent?studentId=${studentId}`, {
+      headers: { 'X-ClassroomId': classroomId },
+    });
+
+    if (result?.status !== 200) {
+      throw new Error('Delete failed');
     }
   }
 
-
   const handleDelete = async (studentId) => {
-    setStudentsList(prev => prev.filter(s => s.user.userId !== studentId));
+    const previous = studentsList;
+    setStudentsList((prev) => prev.filter((s) => s.user.userId !== studentId));
+
     try {
       await deleteStudent(studentId);
     } catch (err) {
-      console.log('delete failed', err);
-      getStudentsList();
+      console.log('delete failed', err.response?.data || err.message);
+      setStudentsList(previous);
     }
   };
 
-
   useEffect(() => {
     getStudentsList();
-  }, [])
-
-  console.log(studentsList)
+  }, []);
 
   return (
     <>
       <StatusBar translucent />
-      <SafeAreaView style={{ flex: 1 }}>
-        <TobBar setInviteStudentModalVisible={setInviteStudentModalVisible} />
-        <ScrollView>
-          {
-            studentsList.length === 0 ? (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.bgColor }} >
-                <Text style={{ fontSize: 16, fontFamily: fonts.semibold }}>No students yet</Text>
-              </View>
-            ) : (
-              <View style={styles.tableContainer}>
-                <View style={[styles.tableRow, styles.tableHeader]}>
-                  <Text style={[styles.tableItem, styles.headerItem]}>S.No</Text>
-                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 70}]}>Name</Text>
-                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 90}]}>Email</Text>
-                  <Text style={[styles.tableItem, styles.headerItem,{paddingLeft: 70}]}>Enrolled Date</Text>
-                  <Text style={[styles.tableItem, styles.headerItem, styles.progressHeader]}>Progress</Text>
-                  <Text style={[styles.tableItem, styles.headerItem, styles.actionHeader]} />
-                </View>
-                {/* <View>
-                  {studentsList.map((student, i) => {
-                    console.log("student ", student);
-                    const totalTests = student.user?.totalTestCount || 0;
-                    const totalAttempted = student.user?.totalAttemptedTestCount || 0;
-                    const studentProgress = totalTests > 0 ? (totalAttempted / totalTests) * 100 : 0;
-                    return (
-                      <View key={student.user.userId} style={[styles.tableRow]} dangerouslySetInnerHTML={{ __html: student.user.name }}>
-                        <Text style={styles.tableItem}>{i + 1}</Text>
-                        <Pressable
-                          onPress={() => console.log('profile')}
-                          style={{ flex: 1 }}
-                        >
-                          <Text style={[styles.tableItem, styles.linkText]}>
-                            {student.user.name}
-                          </Text>
-                        </Pressable>
-                        <Text style={styles.tableItem}>{student.user.email}</Text>
-                        <Text style={styles.tableItem}>
-                          {new Date(student.user.registeredAt * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </Text>
+      <SafeAreaView style={styles.container} edges={[]}>
+        <TopBar
+          searchText={searchText}
+          setSearchText={setSearchText}
+          setInviteStudentModalVisible={setInviteStudentModalVisible}
+        />
 
-                        <View style={styles.progressCell}>
-                          <View style={styles.progressBarBackground}>
-                            <View style={[styles.progressBarFill, { width: Math.floor(studentProgress) + "%" }]} />
-                          </View>
-                          <AppMediumText style={styles.progressText}>{Math.floor(studentProgress)}%</AppMediumText>
-                        </View>
-                        {/* <View style={styles.progressCell}>
-                          <View style={styles.progressBarBackground}>
-                            <View style={[styles.progressBarFill, { width: Math.floor(studentProgress) + "%" }]} />
-                          </View>
-                          <AppMediumText style={styles.progressText}>{Math.floor(studentProgress)}%</AppMediumText>
-                        </View> */}
-
-                        {/* <View>
-                          <Menu
-                            visible={menuVisibleFor === student.user.userId}
-                            onDismiss={closeMenu}
-                            onRequestClose={closeMenu}
-                            anchorPosition='bottom'
-                            anchor={
-                              <IconButton
-                                icon="dots-vertical"
-                                onPress={() => openMenu(student.user.userId)}
-                                iconColor='black'
-                              />
-                            }
-
-                            contentStyle={styles.menuContentStyle}
-                          >
-
-                            <Menu.Item title="Delete" onPress={() => { closeMenu(); handleDelete(student.user.userId); }} titleStyle={styles.menuTitleStyle} />
-
-                          </Menu>
-                        </View>
-                      </View>
-                    )
-                  })}
-                </View>  */}
-                <FlatList data={studentsList}
-                  keyExtractor={(item) => item.user.userId}
-                  renderItem={({ item, index }) => {
-                    const totalTests = item.user?.totalTestCount || 0;
-                    const totalAttempted = item.user?.totalAttemptedTestCount || 0;
-                    const studentProgress = totalTests > 0 ? (totalAttempted / totalTests) * 100 : 0;
-                    return (
-                      <View key={item.user.userId} style={[styles.tableRow]} >
-                        {/* <Text style={styles.tableItem}>{index + 1}</Text> */}
-                        <Pressable
-                          onPress={() => console.log('profile')}
-                          style={{ flex: 1 }}
-                        >
-                          <Text style={[styles.tableItem, styles.linkText]}>
-                            {item.user.name}
-                          </Text>
-                        </Pressable>
-                        <Text style={styles.tableItem}>{item.user.email}</Text>
-                        <Text style={styles.tableItem}>
-                          {new Date(item.user.registeredAt * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </Text>
-
-                        <View style={styles.progressCell}>
-                          <View style={styles.progressBarBackground}>
-                            <View style={[styles.progressBarFill, { width: Math.floor(studentProgress) + "%" }]} />
-                          </View>
-                          <AppMediumText style={styles.progressText}>{Math.floor(studentProgress)}%</AppMediumText>
-                        </View>
-
-                        <View>
-                          <Menu
-                            visible={menuVisibleFor === item.user.userId}
-                            onDismiss={closeMenu}
-                            onRequestClose={closeMenu}
-                            anchorPosition='bottom'
-                            anchor={
-                              <IconButton
-                                icon="dots-vertical"
-                                onPress={() => openMenu(item.user.userId)}
-                                iconColor='black'
-                              />
-                            }
-
-                            contentStyle={styles.menuContentStyle}
-                          >
-
-                            <Menu.Item title="Delete" onPress={() => { closeMenu(); handleDelete(item.user.userId); }} titleStyle={styles.menuTitleStyle} />
-
-                          </Menu>
-                        </View>
-                      </View>
-                    )
-                  }} />
-
-              </View>
-
-            )
+        <FlatList
+          key={`student-columns-${numColumns}`}
+          data={filteredStudents}
+          numColumns={numColumns}
+          keyExtractor={(item) => String(item.user.userId)}
+          columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyWrap}>
+              {isFetchingStudents ? (
+                <ActivityIndicator size="large" color={Colors.primaryColor} />
+              ) : (
+                <Text style={styles.emptyText}>
+                  {hasSearchQuery ? 'No students match your search' : 'No students found'}
+                </Text>
+              )}
+            </View>
           }
-        </ScrollView>
+          renderItem={({ item }) => {
+            const totalTests = item.user?.totalTestCount || 0;
+            const totalAttempted = item.user?.totalAttemptedTestCount || 0;
+            const progress = totalTests > 0 ? Math.floor((totalAttempted / totalTests) * 100) : 0;
+
+            return (
+              <StudentCard
+                student={item}
+                progress={progress}
+                menuVisible={menuVisibleFor === item.user.userId}
+                onOpenMenu={() => openMenu(item.user.userId)}
+                onCloseMenu={closeMenu}
+                onDelete={() => {
+                  closeMenu();
+                  handleDelete(item.user.userId);
+                }}
+                isHalf={numColumns > 1}
+              />
+            );
+          }}
+        />
+
         <InviteStudentModal
           visible={inviteStudentModalVisible}
+          classroomId={classroomId}
           onConfirm={async (link) => {
             await Clipboard.setStringAsync(link);
             setInviteStudentModalVisible(false);
@@ -230,155 +143,219 @@ export default function StudentList() {
         />
       </SafeAreaView>
     </>
-  )
-
-
+  );
 }
 
+function StudentCard({ student, progress, menuVisible, onOpenMenu, onCloseMenu, onDelete, isHalf }) {
 
-function TobBar({ setInviteStudentModalVisible }) {
+  const [ confirmVisible, setConfirmVisible] = useState(false);
 
-  const [searchText, setSearchText] = useState('');
+  const registeredAt = student?.user?.registeredAt
+    ? new Date(student.user.registeredAt * 1000).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+    : '-';
 
   return (
+    <View style={[styles.card, isHalf && styles.cardHalf]}>
+      <View style={styles.cardHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.nameText}>{student?.user?.name || '-'}</Text>
+          <Text style={styles.emailText}>{student?.user?.email || '-'}</Text>
+        </View>
+
+        <Menu
+          visible={menuVisible}
+          onDismiss={onCloseMenu}
+          anchor={
+            <IconButton
+              icon="dots-vertical"
+              onPress={onOpenMenu}
+              iconColor={Colors.secondaryColor}
+            />
+          }
+          contentStyle={styles.menuContentStyle}
+        >
+          <Menu.Item title="Remove" onPress={() => setConfirmVisible(true)}  />
+        </Menu>
+      </View>
+
+      <View style={styles.metaRow}>
+        <Text style={styles.metaLabel}>Enrolled</Text>
+        <Text style={styles.metaValue}>{registeredAt}</Text>
+      </View>
+
+      <View style={styles.metaRow}>
+        <Text style={styles.metaLabel}>Progress</Text>
+        <Text style={styles.metaValue}>{progress}%</Text>
+      </View>
+
+      <View style={styles.progressBarBackground}>
+        <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+      </View>
+
+        <ConfirmModal
+          visible={confirmVisible}
+          onConfirm={() => {
+            onDelete(student.user.userId);
+            setConfirmVisible(false);
+          }}
+          onCancel={() => setConfirmVisible(false)}
+          title="Remove Student"
+          message={`Are you sure you want to remove ${student.user.name} from the classroom?`}
+        />
+
+    </View>
+  );
+}
+
+function TopBar({ searchText, setSearchText, setInviteStudentModalVisible }) {
+  return (
     <View style={styles.topBar}>
-      <TextInput
-        placeholder="Search trainee..."
-        value={searchText}
-        onChangeText={setSearchText}
-        style={styles.searchInput}
-      />
+      <View style={styles.searchWrap}>
+        <TextInput
+          placeholder="Search trainee..."
+          value={searchText}
+          onChangeText={setSearchText}
+          style={styles.searchInput}
+        />
+        {searchText.trim().length > 0 && (
+          <Pressable style={styles.clearBtn} onPress={() => setSearchText('')}>
+            <AntDesign name="close-circle" size={16} color={Colors.lightFont} />
+          </Pressable>
+        )}
+      </View>
 
-      <Pressable
-        style={styles.addButton}
-        onPress={() => setInviteStudentModalVisible(true)}
-      >
-
+      <Pressable style={styles.addButton} onPress={() => setInviteStudentModalVisible(true)}>
         <AntDesign name="plus" size={16} color={Colors.white} />
         <Text style={styles.addButtonText}>Invite</Text>
       </Pressable>
     </View>
-  )
+  );
 }
 
-function InviteStudentModal({ visible, onConfirm, onCancel }) {
+function InviteStudentModal({ visible, classroomId, onConfirm, onCancel }) {
+  const [link, setLink] = useState('');
+  const [isLoadingLink, setIsLoadingLink] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [hasValidLink, setHasValidLink] = useState(false);
+  const baseLink = 'https://testora-kqvp.onrender.com/join/classroom?code=';
 
-  const [link, setLink] = useState("Please refresh the link");
-  const [refreshing, setRefreshing] = useState(false);
-  const baseLink = "http://localhost:8081/join/classroom?code=";
-  const { classroomId } = useGlobalSearchParams();
-
-  const changeClassroomInviteLink = async () => {
+  const loadInviteLink = async (regenerate = false) => {
     try {
-      const result = await api.get('/api/classroom/updateInviteLink', {
-        headers: {
-          'X-ClassroomId': classroomId
-        }
-      });
-      if (result?.status == 200 && result.data.code) {
-        setLink(baseLink + result.data.code);
-        return;
+      if (!regenerate && hasValidLink) return;
+
+      if (regenerate) {
+        setIsRegenerating(true);
       } else {
-        console.log("can't change invite link");
+        setIsLoadingLink(true);
+      }
+
+      const endpoint = regenerate ? '/api/classroom/updateInviteLink' : '/api/classroom/inviteLink';
+      const result = await api.get(endpoint, {
+        headers: {
+          'X-ClassroomId': classroomId,
+        },
+      });
+
+      if (result?.status === 200 && result.data?.code) {
+        setLink(baseLink + result.data.code);
+        setHasValidLink(true);
+      } else {
+        setLink('Unable to load invite link');
+        setHasValidLink(false);
       }
     } catch (err) {
-      console.log("changeClassroomInviteLink err ", err.response?.data);
+      console.log('invite link error', err.response?.data);
+      setLink('Unable to load invite link');
+      setHasValidLink(false);
+    } finally {
+      setIsLoadingLink(false);
+      setIsRegenerating(false);
     }
-    setLink("Please refresh the link");
-  }
-
-  const getClassroomInviteLink = async () => {
-    try {
-      const result = await api.get('/api/classroom/inviteLink', {
-        headers: {
-          'X-ClassroomId': classroomId
-        }
-      });
-      if (result?.status == 200 && result.data.code) {
-        setLink(baseLink + result.data.code);
-        return;
-      } else {
-        console.log("can't get invite link");
-      }
-    } catch (err) {
-      console.log("getClassroomInviteLink err ", err.response?.data);
-    }
-    setLink("Please refresh the link");
-  }
-
+  };
 
   useEffect(() => {
     if (!visible) return;
-    getClassroomInviteLink();
-  }, [visible, refreshing]);
-
+    loadInviteLink(false);
+  }, [visible]);
 
   return (
     <Portal>
-      <Modal
-        visible={visible}
-        onDismiss={onCancel}
-        contentContainerStyle={styles.modalContent}
-      >
+      <Modal visible={visible} onDismiss={onCancel} contentContainerStyle={styles.modalContent}>
         <View style={styles.inputBox}>
-          <Text
-            style={styles.linkText}
-            numberOfLines={2}
-            ellipsizeMode="tail"
-          >
-            {link}
-          </Text>
-          <Pressable onPress={changeClassroomInviteLink}>
-            <FontAwesome name='refresh' size={16} />
+          <View style={{ flex: 1, marginRight: 8 }}>
+            {isLoadingLink ? (
+              <ActivityIndicator size="small" color={Colors.primaryColor} />
+            ) : (
+              <Text style={styles.inviteLinkText} numberOfLines={2} ellipsizeMode="tail">
+                {link || 'Loading invite link...'}
+              </Text>
+            )}
+          </View>
+
+          <Pressable onPress={() => loadInviteLink(true)} disabled={isRegenerating || isLoadingLink}>
+            {isRegenerating ? (
+              <ActivityIndicator size="small" color={Colors.primaryColor} />
+            ) : (
+              <FontAwesome name="refresh" size={16} color={Colors.secondaryColor} />
+            )}
           </Pressable>
         </View>
 
-
         <View style={styles.options}>
-          <Pressable
-            style={[styles.optionBtn, styles.cancelBtn]}
-            onPress={onCancel}
-          >
-
+          <Pressable style={[styles.optionBtn, styles.cancelBtn]} onPress={onCancel}>
             <Text style={styles.cancelText}>Cancel</Text>
           </Pressable>
 
           <Pressable
             style={[styles.optionBtn, styles.confirmBtn]}
-            onPress={() => {
-              onConfirm(link);
-            }}
+            onPress={() => onConfirm(link)}
+            disabled={isLoadingLink || !link || link === 'Unable to load invite link'}
           >
-            <Text style={styles.confirmText}>CopyLink
-            </Text>
+            <Text style={styles.confirmText}>Copy Link</Text>
           </Pressable>
         </View>
       </Modal>
     </Portal>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.bgColor,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 10,
-    ...(Platform.OS === 'web' && {
-      maxWidth: 900,
-      alignSelf: 'center',
-      width: '100%',
-    })
+    width: '100%',
   },
-
-  searchInput: {
+  searchWrap: {
     flex: 1,
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  searchInput: {
     borderWidth: 1,
-    borderColor: Colors.lightGray,
+    borderColor: Colors.borderColor,
     borderRadius: 8,
     paddingHorizontal: 10,
+    paddingRight: 34,
     height: 40,
+    backgroundColor: Colors.white,
+  },
+  clearBtn: {
+    position: 'absolute',
+    right: 10,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButton: {
     flexDirection: 'row',
@@ -392,10 +369,85 @@ const styles = StyleSheet.create({
     color: Colors.white,
     marginLeft: 6,
     fontSize: 14,
+    fontFamily: fonts.medium,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    width: '100%',
+    flexGrow: 1,
+  },
+  columnWrapper: {
+    gap: 12,
+  },
+  emptyWrap: {
+    flex: 1,
+    minHeight: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    fontFamily: fonts.semibold,
+    color: Colors.secondaryColor,
+  },
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.thirdColor,
+    padding: 14,
+    marginBottom: 12,
+  },
+  cardHalf: {
+    flex: 1,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  nameText: {
+    fontSize: 16,
+    fontFamily: fonts.semibold,
+    color: Colors.secondaryColor,
+  },
+  emailText: {
+    marginTop: 2,
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: Colors.lightFont,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  metaLabel: {
+    fontSize: 13,
+    fontFamily: fonts.medium,
+    color: Colors.lightFont,
+  },
+  metaValue: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: Colors.secondaryColor,
+  },
+  progressBarBackground: {
+    marginTop: 10,
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.green,
+    borderRadius: 4,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 420,
     backgroundColor: Colors.white,
     paddingHorizontal: 24,
     paddingVertical: 20,
@@ -406,20 +458,18 @@ const styles = StyleSheet.create({
   inputBox: {
     width: '100%',
     borderWidth: 1,
-    borderColor: Colors.lightGray,
+    borderColor: Colors.borderColor,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
-  linkText: {
-    flex: 1,
-    marginRight: 8,
-    color: '#1DA1F2',
-  
+  inviteLinkText: {
+    color: Colors.primaryColor,
+    fontFamily: fonts.regular,
   },
   options: {
     flexDirection: 'row',
@@ -440,116 +490,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryColor,
   },
   cancelText: {
-    color: Colors.black,
+    color: '#111827',
     fontWeight: '500',
   },
   confirmText: {
     color: Colors.white,
     fontWeight: '500',
   },
-  tableContainer: {
-    margin: 16,
-    borderWidth: 1,
-    borderColor: Colors.thirdColor,
-    borderRadius: 8,
-    borderBottomWidth: 0,
-    backgroundColor: 'white',
-    // position : 'fixed'
+  menuContentStyle: {
+    backgroundColor: Colors.white,
   },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: Colors.thirdColor,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-
+  menuTitleStyle: {
+    color: Colors.secondaryColor,
+    fontFamily: fonts.medium,
   },
-  tableHeader: {
-    backgroundColor: Colors.thirdColor,
-  },
-  tableItem: {
-    flex: 2,
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: Colors.black,
-  
-    
-  },
-  headerItem: {
-    color: '#000',
-    fontFamily: fonts.bold,
-    fontWeight: '600'
-  },
-  linkText: {
-    color: Colors.primaryColor,
-    textDecorationLine: 'underline',
-  },
-
-  progressBarContainer: {
-    flex: 1,
-    height: 10,
-    backgroundColor: Colors.lightGray,
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginRight: 8
-  },
-
-  // progressBarFill: {
-  //   height: '100%',
-  //   backgroundColor: Colors.primaryColor,
-  //   borderRadius: 5
-  // },
-
-  progressBarBackground: {
-    height: 8,
-    backgroundColor: "#E5E5E5",
-    borderRadius: 4,
-    width: "100%",
-  },
-
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#4CAF50",
-    borderRadius: 4,
-  },
-
-  progressCell: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 8,
-  },
-  progressHeader: {
-    textAlign: 'right',
-    paddingRight: 8,
-  },
-  progressText: {
-    marginLeft: 8,
-  },
-  actionCell: {
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionHeader: {
-    width: 40,
-  },
-  // progressBarBackground: {
-  //   height: 8,
-  //   backgroundColor: Colors.primaryColor + '20',
-  //   borderRadius: 10,
-  //   overflow: 'hidden',
-  //   marginHorizontal: 22,
-  //   marginVertical: 10
-  // },
-  // progressBarFill: {
-  //   height: '100%',
-  //   backgroundColor: Colors.primaryColor,
-  //   borderRadius: 10,
-  // },
-
-})
-
-
+});

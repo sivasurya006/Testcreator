@@ -1,52 +1,65 @@
 import { Pressable, StyleSheet, Text, View, TextInput, FlatList, Platform, Dimensions, useWindowDimensions } from 'react-native'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Colors from "../../styles/Colors"
 import { AntDesign } from "react-native-vector-icons"
 import InputModal from "../components/modals/InputModal"
 import api from "../../util/api";
-import { router, useFocusEffect, useGlobalSearchParams } from 'expo-router'
+import { router, useGlobalSearchParams } from 'expo-router'
 import Test from '../components/Test'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { AppBoldText, AppMediumText } from '../../styles/fonts'
 import TestBanner from '../components/TestComponentBanner'
+import LoadingScreen from '../components/LoadingScreen'
 
 
 
 const classroom_width = 360;
 const { width } = Dimensions.get('window')
 
-export default function CreatedTestList({ filter, search }) {
+export default function CreatedTestList({ filter, search, isCreateTestModalVisible, setCreateTestModalVisible }) {
 
   if (!filter) return
 
+  const [isLoading, setLoading] = useState(false);
   const [allCreatedTests, setCreatedTest] = useState([]);
-  const [isCreateTestModalVisible, setCreateTestModalVisible] = useState(false);
   const [testName, setTestName] = useState("");
   const { width } = useWindowDimensions();
   const numColumns = Math.floor((width - 300) / classroom_width);
-  console.log(numColumns)
 
   const filteredTests = useMemo(() => {
-    if (!search || search.trim() === "") return allCreatedTests;
+    let filtered = allCreatedTests;
 
-    return allCreatedTests.filter(test =>
-      test.testTitle?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [allCreatedTests, search]);
+    if (filter === 'published') {
+      filtered = filtered.filter(test => test.status === 'PUBLISHED');
+    } else if (filter === 'drafts') {
+      filtered = filtered.filter(test => test.status === 'DRAFT');
+    }
+
+    if (search && search.trim() !== '') {
+      filtered = filtered.filter(test =>
+        test.testTitle?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [allCreatedTests, search, filter]);
 
   const { classroomId } = useGlobalSearchParams();
 
-  useFocusEffect(
-    useCallback(() => {
-      getAllCreatedTests(setCreatedTest, classroomId, filter);
-    }, [classroomId, filter])
-  );
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await getAllCreatedTests(setCreatedTest, classroomId, 'all');
+      setLoading(false);
+    })();
+  }, []);
 
   const onCreateTest = async () => {
     if (testName.trim().length === 0) return;
+    setCreateTestModalVisible(false);
+    setLoading(true);
     const result = await handleCreateTest(classroomId, testName);
-    console.log("result ", result)
     if (result && filter != 'published') {
       router.push({
         pathname: '/[classroomId]/test/[testId]/edit',
@@ -57,6 +70,8 @@ export default function CreatedTestList({ filter, search }) {
           preview: 1,
         },
       })
+      setLoading(false);
+
       setCreatedTest([result, ...allCreatedTests]);
     }
     onCancelTest();
@@ -95,16 +110,7 @@ export default function CreatedTestList({ filter, search }) {
       {/* <SafeAreaView style={styles.container} edges={['top']}> */}
 
 
-      <View style={styles.topBar}>
-        <Pressable
-          style={styles.addButton}
-          onPress={() => setCreateTestModalVisible(true)}
-        >
-          <AntDesign name="plus" size={16} color={Colors.white} />
-          <Text style={styles.addButtonText}>Create</Text>
-        </Pressable>
-      </View>
-
+      <LoadingScreen visible={isLoading} />
 
       <FlatList
         data={filteredTests}
@@ -130,18 +136,18 @@ export default function CreatedTestList({ filter, search }) {
             <AppMediumText>No Draft Tests</AppMediumText>
           </View>
         ) : (
-            filteredTests.length == 0 && (
-              <View style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -100 }, { translateY: -20 }] }}>
-                <Pressable
-                  style={styles.addButton}
-                  onPress={() => setCreateTestModalVisible(true)}
-                >
-                  <AntDesign name="plus" size={16} color={Colors.white} />
-                  <Text style={styles.addButtonText}>Create your first Test</Text>
-                </Pressable>
-              </View>
-            )
-        ) 
+          (filteredTests.length == 0 && !isLoading) && (
+            <View style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -100 }, { translateY: -20 }] }}>
+              <Pressable
+                style={styles.addButton}
+                onPress={() => setCreateTestModalVisible(true)}
+              >
+                <AntDesign name="plus" size={16} color={Colors.white} />
+                <Text style={styles.addButtonText}>Create your first Test</Text>
+              </Pressable>
+            </View>
+          )
+        )
       }
 
       {
@@ -241,25 +247,50 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primaryColor,
-    paddingHorizontal: 12,
-    height: 40,
-    borderRadius: 8,
-    alignSelf: 'flex-end'
-  },
-
-  addButtonText: {
-    color: Colors.white,
-    marginLeft: 6,
-    fontSize: 14,
-  },
 
   emptyText: {
     textAlign: 'center',
     marginTop: 40,
     color: Colors.gray,
-  }
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primaryColor,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: Colors.white,
+    marginLeft: 5,
+  },
+  filterContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingBottom: 10,
+    paddingHorizontal: 16,
+    ...(Platform.OS === 'web' && {
+      // maxWidth: 900,
+      alignSelf: 'center',
+      width: '100%',
+    })
+  },
+  filterButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: Colors.lightGray,
+  },
+  activeFilterButton: {
+    backgroundColor: Colors.primaryColor,
+  },
+  filterButtonText: {
+    color: Colors.gray,
+    fontSize: 14,
+  },
+  activeFilterButtonText: {
+    color: Colors.white,
+  },
+
 });

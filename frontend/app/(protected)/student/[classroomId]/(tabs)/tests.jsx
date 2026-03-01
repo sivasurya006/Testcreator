@@ -61,10 +61,14 @@ export default function StudentTestLists() {
     console.log("hi", classroomId);
     useFocusEffect(
         useCallback(() => {
-            setLoading(true)
-            const get = async () => await getAllPublishedTests(setPublishedTest, classroomId);
-            get();
-            setLoading(false)
+            let isActive = true;
+            const fetch = async () => {
+                setLoading(true);
+                await getAllPublishedTests(setPublishedTest, classroomId);
+                if (isActive) setLoading(false);
+            };
+            fetch();
+            return () => { isActive = false; };
         }, [classroomId])
     );
 
@@ -74,7 +78,6 @@ export default function StudentTestLists() {
         <>
 
             <StatusBar style="dark" translucent backgroundColor={Colors.bgColor} />
-            <LoadingScreen visible={isLoading} />
             <SafeAreaView style={{ flex: 1, backgroundColor: Colors.bgColor }} edges={['top']}>
 
                 <View style={styles.menu}>
@@ -141,7 +144,13 @@ export default function StudentTestLists() {
 
                     filteredTests.length == 0 ? (
                         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                            <AppMediumText>No Tests Available</AppMediumText>
+                            {isLoading ? (
+                                <ActivityIndicator size="large" color={Colors.primaryColor} />
+                            ) : (
+                                <AppMediumText style={styles.emptyText}>
+                                    No tests available 
+                                </AppMediumText>
+                            )}
                         </View>
                     ) : (
                         <FlatList

@@ -43,7 +43,7 @@ public class TimedTestAction extends JsonApiAction implements ServletRequestAwar
 			accessService.require(Permission.ATTEMPTS_REMAINING, context);
 			
 			startTestDto = service.startTest(userId, testId);
-			startTestDto.setWsUrl("ws://localhost:8080/testcreator/ws/timedtest?attemptId="
+			startTestDto.setWsUrl("wss://testora-backend.onrender.com/ws/timedtest?attemptId="
 					+ startTestDto.getTest().getAttemptId());
 			return SUCCESS;
 		} catch (UnauthorizedException e) {

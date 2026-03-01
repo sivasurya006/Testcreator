@@ -57,18 +57,21 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 			
 			JwtUtil jwt = new JwtUtil(context);
 			String token = jwt.generateToken(userId+"");
-			Cookie cookie = new Cookie("token", token);
-			cookie.setHttpOnly(true);
-			cookie.setSecure(false);
-			cookie.setPath("/");
-			cookie.setMaxAge(24 * 60 * 60); 
 			
-			if(clientType.equals("mobile")) {
-				this.authDto = new UserAuthenticationDto(true, token);
-			}else {
-				response.addCookie(cookie);
-				this.authDto = new UserAuthenticationDto(true, null);
-			}
+			this.authDto = new UserAuthenticationDto(true, token);
+//			
+//			if(clientType.equals("mobile")) {
+//				this.authDto = new UserAuthenticationDto(true, token);
+//			}else {
+//				String cookie = "token=" + token +
+//		                "; Path=/" +
+//		                "; Max-Age=86400" +
+//		                "; HttpOnly" +
+//		                "; Secure" +
+//		                "; SameSite=None";
+//				response.setHeader("Set-Cookie", cookie);
+//				this.authDto = new UserAuthenticationDto(true, null);
+//			}
 			return SUCCESS;
 		}catch (UserNotFoundException e) {
 			// TODO: logger
@@ -114,16 +117,21 @@ public class UserAction extends JsonApiAction implements ServletResponseAware, S
 		
 		JwtUtil jwt = new JwtUtil(context);
 		String token = jwt.generateToken(userId+"");
-		Cookie cookie = new Cookie("token", token);
-		cookie.setMaxAge(60 * 60 * 24);
-		cookie.setHttpOnly(true);
+
+		this.authDto = new UserAuthenticationDto(true, token);
 		
-		if(clientType.equals("mobile")) {
-			this.authDto = new UserAuthenticationDto(true, token);
-		}else {
-			response.addCookie(cookie);
-			this.authDto = new UserAuthenticationDto(true, null);
-		}
+//		if(clientType.equals("mobile")) {
+//			this.authDto = new UserAuthenticationDto(true, token);
+//		}else {
+//			String cookie = "token=" + token +
+//	                "; Path=/" +
+//	                "; Max-Age=86400" +
+//	                "; HttpOnly" +
+//	                "; Secure" +
+//	                "; SameSite=None";
+//			response.setHeader("Set-Cookie", cookie);
+//			this.authDto = new UserAuthenticationDto(true, null);
+//		}
 			
 		return SUCCESS;
 	}	

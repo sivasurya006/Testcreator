@@ -1,786 +1,514 @@
-import { StyleSheet, Text, View, FlatList, ScrollView, Dimensions } from "react-native";
-import React, { useCallback, useState } from "react";
-import api from "../../../../util/api";
-import Colors from "../../../../styles/Colors";
-import { useFocusEffect, useGlobalSearchParams } from "expo-router";
-import Test from "../../../../src/components/Test";
-import { MaterialIcons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LineChart, PieChart } from "react-native-chart-kit";
-import { useWindowDimensions } from "react-native";
-import { AppBoldText, AppRegularText } from "../../../../styles/fonts";
-import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
-export default function Dashboard() {
-
-  const { classroomId } = useGlobalSearchParams();
-
-  const screenWidth = Dimensions.get("window").width;
-
-  const [stats, setStats] = useState({
-    classroomName: "",
-    createdAt: 0,
-    creatorName: "",
-    totalStudents: 0,
-    totalTests: 0,
-  });
-
-
-  const [pieData, setPieData] = useState([]);
-  const [lineData, setLineData] = useState({
-    labels: [],
-    datasets: [{ data: [] }],
-  });
-
-
-  const [tests, setTests] = useState([]);
-  const [topPerfomance, setTopPerfomance] = useState([]);
-
-  const { width } = useWindowDimensions();
-
-  const isMobile = width <= 812;
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchDashboardData();
-      fetchDashboardTests();
-      fetchTopPerformStudent();
-
-    }, [])
-  );
-
-  useEffect(() => {
-    fetchDashboardAnalitics();
-  }, [stats])
-
-  async function fetchDashboardData() {
-
-    try {
-      const res = await api.get("/api/api/classroomdetails", {
-        headers: { "X-ClassroomId": classroomId },
-      });
-
-      if (res.status === 200) {
-        const data = res.data || {};
-
-
-        setStats({
-          classroomName: data.classroomName ?? "",
-          createdAt: data.createdAt ?? 0,
-          creatorName: data.creatorName ?? "",
-          totalStudents: data.totalStudents ?? 0,
-          totalTests: data.totalTests ?? 0,
-        })
-
-
-      }
-
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-
-  async function fetchDashboardTests() {
-    try {
-      const res = await api.get("/api/tests/get-created-tests?limit=5&status=published",
-        { headers: { "X-ClassroomId": classroomId } }
-      );
-      if (res.status === 200) {
-        setTests(res.data);
-
-
-      }
-    }
-    catch (err) { }
-  }
-
-
-  async function fetchTopPerformStudent() {
-    try {
-      const res = await api.get("/api/api/getTopPerfomanceStudent",
-        { headers: { "X-ClassroomId": classroomId } }
-      )
-      if (res.status === 200) {
-        setTopPerfomance(res.data);
-        console.log("Top performance", res.data)
-
-      }
-    }
-    catch (err) {
-
-    }
-  }
-
-
-  async function fetchDashboardAnalitics() {
-
-    try {
-      const res = await api.get("/api/tests/getclassroomAnalitics", {
-        headers: { "X-ClassroomId": classroomId },
-      });
-
-      if (res.status === 200) {
-        const pieChartData = res.data ?? [];
-
-        const submittedCount = pieChartData.reduce(
-          (total, item) => total + item.submittedTestCount,
-          0
-        );
-
-        const total =
-          (stats?.totalStudents ?? 0) *
-          (stats?.totalTests ?? 0);
-        console.log("Analytics Data:", res.data);
-
-        console.log("Total Students:", stats?.totalStudents);
-        console.log("Total Tests:", stats?.totalTests);
-        console.log("Submitted Count:", submittedCount);
-        console.log("Total Possible Submissions:", total);
-        console.log("Pie Chart Data:", pieChartData);
-
-        const notSubmittedCount = total - submittedCount;
-
-        setPieData([
-          {
-            name: "Submitted",
-            population: submittedCount,
-            color: "#4CAF50",
-            legendFontColor: "#333",
-            legendFontSize: 14,
-          },
-          {
-            name: "Not Submitted",
-            population: notSubmittedCount > 0 ? notSubmittedCount : 0,
-            color: "#F44336",
-            legendFontColor: "#333",
-            legendFontSize: 14,
-          },
-        ]);
-
-        console.log("line chart data:", pieChartData);
-        const LineChartTestName = pieChartData
-          .slice(0, 5)
-          .map(item => item.testTitle);
-
-        const LineChartTestAttemptCount = pieChartData
-          .slice(0, 5)
-          .map(item => item.attemptCount);
-
-
-        console.log(pieChartData);
-        console.log(LineChartTestAttemptCount);
-        console.log(LineChartTestName)
-        setLineData({
-          labels: LineChartTestName,
-          datasets: [{ data: LineChartTestAttemptCount }],
-        });
-
-
-      }
-    } catch (err) {
-      console.log("Analytics error:", err);
-    }
-  }
-
-
-
-
-  // const hasLineData =
-  //   lineData?.datasets?.[0]?.data &&
-  //   lineData.datasets[0].data.length > 0;
-
-  // const maxValue = hasLineData
-  //   ? Math.max(...lineData.datasets[0].data)
-  //   : 1;
-
-  const values = lineData.datasets[0]?.data || [];
-  const LineChartSegmentMaxValue = values.length ? Math.max(...values) : 0;
-  return (
-    <>
-      <StatusBar style="dark" backgroundColor={Colors.bgColor} />
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        {isMobile ? (
-          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-
-            <View style={styles.container}>
-              <>
-
-                <View style={styles.cardRowMobile}>
-                  <View style={styles.smallCardMobile}>
-                    <MaterialIcons name="assignment" size={26} color={Colors.primaryColor} />
-                    <View>
-                      <AppRegularText style={styles.cardTitleMobile}>Tests</AppRegularText>
-                      <Text style={styles.cardNumberMobile}>{stats.totalTests}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.smallCardMobile}>
-                    <MaterialIcons name="people" size={26} color={Colors.primaryColor} />
-                    <View>
-                      <AppRegularText style={styles.cardTitleMobile}>Students</AppRegularText>
-                      <Text style={styles.cardNumberMobile}>{stats.totalStudents}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.detailCardMobile}>
-                  <AppBoldText style={styles.titleMobile}>{stats.classroomName}</AppBoldText>
-                  <AppRegularText style={styles.subTextMobile}>
-                    Creator: {stats.creatorName}
-                  </AppRegularText>
-                  <AppRegularText style={styles.subTextMobile}>
-                    Created:{" "}
-                    {stats.createdAt
-                      ? new Date(stats.createdAt * 1000).toLocaleDateString()
-                      : "-"}
-                  </AppRegularText>
-                </View>
-
-                <View style={styles.chartCardMobile}>
-                  <AppBoldText style={styles.sectionTitle}>Monthly Progress</AppBoldText>
-                  {lineData.datasets && lineData.datasets.length > 0 ? (
-
-                    <LineChart
-                      data={lineData}
-                      width={screenWidth - 32}
-                      height={220}
-                      chartConfig={chartConfig}
-                      bezier
-                      segments={LineChartSegmentMaxValue > 15 ? 5 : LineChartSegmentMaxValue}
-
-                    />
-                  ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No data available</Text>
-                  )}
-                </View>
-
-                <View style={styles.chartCardMobile}>
-                  <AppBoldText style={styles.sectionTitle}>Submission</AppBoldText>
-                  {pieData && pieData.length > 0 ? (
-
-                    <PieChart
-                      data={pieData}
-                      width={screenWidth}
-                      height={200}
-                      chartConfig={chartConfig}
-                      accessor="population"
-                      backgroundColor="transparent"
-                      paddingLeft="15"
-                    />
-
-                  ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No data available</Text>
-                  )}
-                </View>
-                <View style={styles.sectionMobile}>
-
-                  <AppBoldText style={styles.sectionTitle}>Recently Published</AppBoldText>
-
-                  <View style={{ width: "100%" }}>
-                    <FlatList
-                      data={tests}
-                      scrollEnabled={true}
-                      keyExtractor={(item, index) => index.toString()}
-                      renderItem={({ item }) => (
-                        <View style={{ width: "100%" }}>
-                          <Test data={item} isDashboard />
-                        </View>
-                      )}
-                    />
-                  </View>
-
-                </View>
-                <View style={styles.sectionMobile}>
-                  <AppBoldText style={styles.sectionTitle}>Top Performing</AppBoldText>
-                  {topPerfomance.length === 0 ? (
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No top performers available</Text>
-                  ) : (
-
-                    topPerfomance.map((item, index) => (
-                      <View key={index} style={styles.topperCardMobile}>
-                        <View style={styles.avatar}>
-                          <AppRegularText style={styles.avatarText}>
-                            {item.topPerformerName.substring(0, 2).toUpperCase()}
-                          </AppRegularText>
-                        </View>
-
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.topperName}>{item.topPerformerName}</Text>
-                          <Text style={styles.topperScore}>
-                            Score: {item.score}
-                          </Text>
-                        </View>
-
-                        <MaterialIcons name="trending-up" size={20} color="green" />
-                      </View>
-                    ))
-
-                  )}
-                </View>
-              </>
-
-            </View>
-
-          </ScrollView>
-
-        ) : (
-          <>
-            <ScrollView contentContainerStyle={styles.container}>
-
-              <View style={styles.Cards}>
-                <View style={styles.smallCardRow}>
-                  <View style={styles.smallCard}>
-                    <MaterialIcons name="assignment" size={34} color={Colors.primaryColor} />
-                    <View style={styles.Count}>
-                      <AppRegularText style={styles.cardTitle}>Total Tests</AppRegularText>
-                      <Text style={styles.cardNumber}>{stats.totalTests}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.smallCard}>
-                    <MaterialIcons name="people" size={34} color={Colors.primaryColor} />
-                    <View style={styles.Count}>
-                      <AppRegularText style={styles.cardTitle}>Total Students</AppRegularText>
-                      <Text style={styles.cardNumber}>{stats.totalStudents}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.detailCard}>
-                  <View style={styles.classroomDeatilTop} />
-                  <View style={styles.classRoomDetailCard}>
-                    <AppRegularText style={styles.title}>{stats.classroomName}</AppRegularText>
-                    <View style={styles.creatorCard}>
-                      <AppRegularText style={styles.subText}>Creator:</AppRegularText>
-                      <Text style={styles.creatorName}>{stats.creatorName}</Text>
-                    </View>
-                    <View style={styles.creatorCard}>
-                      <Text style={styles.subText}>Created:</Text>
-                      <Text style={styles.createdAt}>
-                        {stats.createdAt
-                          ? new Date(stats.createdAt * 1000).toLocaleDateString()
-                          : "-"}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.graph1}>
-                <View style={styles.LineCard}>
-                  <AppRegularText style={styles.sectionTitle}>Monthly Progress</AppRegularText>
-                  {lineData.datasets && lineData.datasets.length > 0 ? (
-
-                    <LineChart
-                      data={lineData}
-                      width={960}
-                      height={400}
-                      chartConfig={chartConfig}
-                      segments={LineChartSegmentMaxValue > 15 ? 5 : LineChartSegmentMaxValue}
-
-                      bezier
-                    // fromZero
-                    // segments={Math.max(...lineData.datasets[0].data)}
-                    />
-                  ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No data available</Text>
-                  )}
-
-                </View>
-
-                <View style={styles.chartCard}>
-                  <AppRegularText style={styles.sectionTitle}>Submission Status</AppRegularText>
-                  {pieData && pieData.length > 0 ? (
-                    <PieChart
-                      data={pieData}
-                      width={400}
-                      height={220}
-                      chartConfig={chartConfig}
-                      accessor="population"
-                      backgroundColor="transparent"
-                    />
-                  ) : (
-                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No data available</Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.bottom}>
-                <View style={styles.section}>
-                  <AppRegularText style={styles.sectionTitle}>Recently Published</AppRegularText>
-                  <FlatList
-                    data={tests}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => (
-                      <Test data={item} isDashboard={false} />
-                    )}
-                  />
-                </View>
-
-                <View style={styles.sectionTopPeform}>
-                  <AppRegularText style={styles.sectionTitle}>Top Performing</AppRegularText>
-                  <View style={styles.topperContainerDesktop}>
-                    {topPerfomance.length === 0 ? (
-                      <Text style={{ textAlign: 'center', marginTop: 20, color: '#555' }}>No top performers available</Text>
-                    ) : (
-                      topPerfomance.map((item, index) => (
-                        <View key={index} style={styles.topperCardDesktop}>
-                          <View style={styles.nameProfile}>
-                            <AppRegularText style={styles.profileText}>
-                              {item.topPerformerName.substring(0, 2).toUpperCase()}
-                            </AppRegularText>
-                          </View>
-
-                          <View style={{ gap: 20 }}>
-                            <AppRegularText style={styles.topperNameDesktop}>
-                              {item.topPerformerName}
-                            </AppRegularText>
-                            <AppRegularText style={styles.topperScoreDesktop}>
-                              Score: {item.score}
-                            </AppRegularText>
-                          </View>
-
-                          <View style={styles.progressIcon}>
-                            <MaterialIcons name="trending-up" size={20} color="green" />
-                          </View>
-                        </View>
-                      ))
-
-                    )}
-
-                  </View>
-                </View>
-
-              </View>
-            </ScrollView>
-
-          </>
-        )}
-
-      </SafeAreaView >
-    </>
-  );
-
+import React, { useCallback, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect, useGlobalSearchParams } from 'expo-router';
+import { LineChart, PieChart } from 'react-native-chart-kit';
+import { MaterialIcons } from '@expo/vector-icons';
+
+import api from '../../../../util/api';
+import Colors from '../../../../styles/Colors';
+import Test from '../../../../src/components/Test';
+import LoadingScreen from '../../../../src/components/LoadingScreen';
+import { AppBoldText, AppRegularText } from '../../../../styles/fonts';
+
+const DASHBOARD_CACHE_TTL = 5 * 60 * 1000;
+const dashboardCache = new Map();
+
+function getCacheKey(classroomId) {
+  return String(classroomId || '');
+}
+
+function isCacheFresh(cacheEntry) {
+  if (!cacheEntry?.cachedAt) return false;
+  return Date.now() - cacheEntry.cachedAt < DASHBOARD_CACHE_TTL;
 }
 
 const chartConfig = {
-  backgroundGradientFrom: "#fff",
-  backgroundGradientTo: "#fff",
+  backgroundGradientFrom: '#fff',
+  backgroundGradientTo: '#fff',
   color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
-  labelColor: () => "#333",
+  labelColor: () => '#333',
   decimalPlaces: 0,
 };
-const styles = StyleSheet.create({
 
+export default function Dashboard() {
+  const { classroomId } = useGlobalSearchParams();
+  const { width: screenWidth } = useWindowDimensions();
+
+  const [stats, setStats] = useState({
+    classroomName: '',
+    createdAt: 0,
+    creatorName: '',
+    totalStudents: 0,
+    totalTests: 0,
+  });
+  const [tests, setTests] = useState([]);
+  const [topPerformance, setTopPerformance] = useState([]);
+  const [analytics, setAnalytics] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const isMobile = screenWidth < 900;
+
+  const lineData = useMemo(() => {
+    const labels = analytics.slice(0, 5).map((item) => item.testTitle || 'Test');
+    const values = analytics.slice(0, 5).map((item) => Number(item.attemptCount) || 0);
+
+    return {
+      labels,
+      datasets: [{ data: values.length > 0 ? values : [0] }],
+    };
+  }, [analytics]);
+
+  const lineValues = lineData.datasets?.[0]?.data || [];
+  const hasLineData = lineValues.some((value) => value > 0);
+  const lineSegments = Math.max(...lineValues, 1);
+
+  const pieData = useMemo(() => {
+    const submittedCount = analytics.reduce((total, item) => total + (Number(item.attemptCount) || 0), 0);
+    const totalExpectedSubmissions = (Number(stats.totalStudents) || 0) * (Number(stats.totalTests) || 0);
+    const notSubmittedCount = Math.max(totalExpectedSubmissions - submittedCount, 0);
+
+    return [
+      {
+        name: 'Submitted',
+        population: submittedCount,
+        color: '#4CAF50',
+        legendFontColor: '#333',
+        legendFontSize: 12,
+      },
+      {
+        name: 'Not Submitted',
+        population: notSubmittedCount,
+        color: '#F44336',
+        legendFontColor: '#333',
+        legendFontSize: 12,
+      },
+    ];
+  }, [analytics, stats.totalStudents, stats.totalTests]);
+
+  const hasPieData = pieData.some((item) => item.population > 0);
+
+  const loadDashboard = useCallback(
+    async (force = false) => {
+      const cacheKey = getCacheKey(classroomId);
+      const cacheEntry = dashboardCache.get(cacheKey);
+
+      if (!force && isCacheFresh(cacheEntry)) {
+        setStats(cacheEntry.stats);
+        setTests(cacheEntry.tests);
+        setTopPerformance(cacheEntry.topPerformance);
+        setAnalytics(cacheEntry.analytics);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        const [statsRes, testsRes, topRes, analyticsRes] = await Promise.all([
+          api.get('/api/api/classroomdetails', { headers: { 'X-ClassroomId': classroomId } }),
+          api.get('/api/tests/get-created-tests?limit=5&status=published', {
+            headers: { 'X-ClassroomId': classroomId },
+          }),
+          api.get('/api/api/getTopPerfomanceStudent', {
+            headers: { 'X-ClassroomId': classroomId },
+          }),
+          api.get('/api/tests/getclassroomAnalitics', {
+            headers: { 'X-ClassroomId': classroomId },
+          }),
+        ]);
+
+        const statsData = {
+          classroomName: statsRes?.data?.classroomName ?? '',
+          createdAt: statsRes?.data?.createdAt ?? 0,
+          creatorName: statsRes?.data?.creatorName ?? '',
+          totalStudents: statsRes?.data?.totalStudents ?? 0,
+          totalTests: statsRes?.data?.totalTests ?? 0,
+        };
+        const testsData = Array.isArray(testsRes?.data) ? testsRes.data : [];
+        const topData = Array.isArray(topRes?.data) ? topRes.data : [];
+        const analyticsData = Array.isArray(analyticsRes?.data) ? analyticsRes.data : [];
+
+        setStats(statsData);
+        setTests(testsData);
+        setTopPerformance(topData);
+        setAnalytics(analyticsData);
+
+        dashboardCache.set(cacheKey, {
+          cachedAt: Date.now(),
+          stats: statsData,
+          tests: testsData,
+          topPerformance: topData,
+          analytics: analyticsData,
+        });
+      } catch (err) {
+        console.log('Dashboard fetch error:', err?.response?.data || err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [classroomId]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboard(false);
+    }, [loadDashboard])
+  );
+
+  const wideChartWidth = isMobile ? screenWidth - 56 : Math.max(420, Math.min(screenWidth * 0.55, 820));
+  const pieChartWidth = isMobile ? screenWidth - 56 : Math.max(320, Math.min(screenWidth * 0.28, 420));
+
+  return (
+    <>
+      <StatusBar style="dark" backgroundColor={Colors.bgColor} />
+      <SafeAreaView style={styles.safeArea} edges={[]}> 
+        <LoadingScreen visible={isLoading} />
+
+        <ScrollView contentContainerStyle={[styles.container, isMobile && styles.containerMobile]}>
+          <View style={[styles.topRow, isMobile && styles.topRowMobile]}>
+            <AppBoldText style={styles.pageTitle}>Classroom Dashboard</AppBoldText>
+            {!isMobile && (
+              <Pressable style={styles.refreshBtn} onPress={() => loadDashboard(true)}>
+                <MaterialIcons name="refresh" size={18} color={Colors.white} />
+                <AppRegularText style={styles.refreshText}>Refresh</AppRegularText>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={[styles.summaryRow, isMobile && styles.summaryRowMobile]}>
+            <View style={styles.smallCard}>
+              <MaterialIcons name="assignment" size={24} color={Colors.primaryColor} />
+              <View style={styles.countWrap}>
+                <AppRegularText style={styles.cardLabel}>Total Tests</AppRegularText>
+                <AppBoldText style={styles.cardValue}>{stats.totalTests}</AppBoldText>
+              </View>
+            </View>
+
+            <View style={styles.smallCard}>
+              <MaterialIcons name="people" size={24} color={Colors.primaryColor} />
+              <View style={styles.countWrap}>
+                <AppRegularText style={styles.cardLabel}>Total Students</AppRegularText>
+                <AppBoldText style={styles.cardValue}>{stats.totalStudents}</AppBoldText>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.classroomCard}>
+            <AppBoldText style={styles.classroomTitle}>{stats.classroomName || 'Classroom'}</AppBoldText>
+            <AppRegularText style={styles.classroomMeta}>Creator: {stats.creatorName || '-'}</AppRegularText>
+            <AppRegularText style={styles.classroomMeta}>
+              Created: {stats.createdAt ? new Date(stats.createdAt * 1000).toLocaleDateString() : '-'}
+            </AppRegularText>
+          </View>
+
+          <View style={[styles.chartRow, isMobile && styles.chartRowMobile]}>
+            <View style={[styles.chartCard, isMobile ? styles.mobileFullCard : styles.lineCard]}>
+              <AppBoldText style={styles.sectionTitle}>Progress by Test</AppBoldText>
+              {hasLineData ? (
+                <LineChart
+                  data={lineData}
+                  width={wideChartWidth}
+                  height={260}
+                  chartConfig={chartConfig}
+                  segments={lineSegments}
+                  bezier
+                  fromZero
+                />
+              ) : (
+                <AppRegularText style={styles.emptyText}>
+                  No attempts yet. Students need to submit tests to show progress.
+                </AppRegularText>
+              )}
+            </View>
+
+            <View style={[styles.chartCard, isMobile ? styles.mobileFullCard : styles.pieCard]}>
+              <AppBoldText style={styles.sectionTitle}>Submission Status</AppBoldText>
+              {hasPieData ? (
+                <PieChart
+                  data={pieData}
+                  width={pieChartWidth}
+                  height={220}
+                  chartConfig={chartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft={isMobile ? '10' : '0'}
+                />
+              ) : (
+                <AppRegularText style={styles.emptyText}>
+                  No submission data available yet.
+                </AppRegularText>
+              )}
+            </View>
+          </View>
+
+          {isMobile ? (
+            <>
+              <View style={[styles.sectionCard, styles.mobileSectionCard]}>
+                <AppBoldText style={styles.sectionTitle}>Top Performing Students</AppBoldText>
+                {topPerformance.length === 0 ? (
+                  <AppRegularText style={styles.emptyText}>No performance records yet.</AppRegularText>
+                ) : (
+                  topPerformance.map((item, index) => (
+                    <View key={`${item?.topPerformerName || 'top'}-${index}`} style={styles.topperCard}>
+                      <View style={styles.avatar}>
+                        <AppBoldText style={styles.avatarText}>
+                          {(item?.topPerformerName || 'NA').slice(0, 2).toUpperCase()}
+                        </AppBoldText>
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <AppBoldText style={styles.topperName}>{item?.topPerformerName || '-'}</AppBoldText>
+                        <AppRegularText style={styles.topperScore}>Score: {item?.score ?? 0}</AppRegularText>
+                      </View>
+
+                      <MaterialIcons name="trending-up" size={20} color={Colors.green} />
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <View style={[styles.sectionCard, styles.mobileSectionCard]}>
+                <AppBoldText style={styles.sectionTitle}>Recently Published</AppBoldText>
+                {tests.length === 0 ? (
+                  <AppRegularText style={styles.emptyText}>No published tests yet.</AppRegularText>
+                ) : (
+                  tests.map((item, index) => <Test key={`${item?.testId || index}`} data={item} isDashboard={false} />)
+                )}
+              </View>
+            </>
+          ) : (
+            <View style={styles.bottomRow}>
+              <View style={styles.sectionCard}>
+                <AppBoldText style={styles.sectionTitle}>Recently Published</AppBoldText>
+                {tests.length === 0 ? (
+                  <AppRegularText style={styles.emptyText}>No published tests yet.</AppRegularText>
+                ) : (
+                  tests.map((item, index) => <Test key={`${item?.testId || index}`} data={item} isDashboard={false} />)
+                )}
+              </View>
+
+              <View style={styles.sectionCard}>
+                <AppBoldText style={styles.sectionTitle}>Top Performing Students</AppBoldText>
+                {topPerformance.length === 0 ? (
+                  <AppRegularText style={styles.emptyText}>No performance records yet.</AppRegularText>
+                ) : (
+                  topPerformance.map((item, index) => (
+                    <View key={`${item?.topPerformerName || 'top'}-${index}`} style={styles.topperCard}>
+                      <View style={styles.avatar}>
+                        <AppBoldText style={styles.avatarText}>
+                          {(item?.topPerformerName || 'NA').slice(0, 2).toUpperCase()}
+                        </AppBoldText>
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <AppBoldText style={styles.topperName}>{item?.topPerformerName || '-'}</AppBoldText>
+                        <AppRegularText style={styles.topperScore}>Score: {item?.score ?? 0}</AppRegularText>
+                      </View>
+
+                      <MaterialIcons name="trending-up" size={20} color={Colors.green} />
+                    </View>
+                  ))
+                )}
+              </View>
+            </View>
+          )}
+        </ScrollView>
+
+        {isMobile && (
+          <Pressable style={styles.mobileRefreshFab} onPress={() => loadDashboard(true)}>
+            <MaterialIcons name="refresh" size={22} color={Colors.white} />
+          </Pressable>
+        )}
+      </SafeAreaView>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.bgColor,
+  },
   container: {
     padding: 16,
     backgroundColor: Colors.bgColor,
+    gap: 14,
   },
-
-
-  cardRowMobile: {
-    flexDirection: "row",
+  containerMobile: {
     gap: 12,
+    paddingBottom: 90,
   },
-
-  smallCardMobile: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  topRowMobile: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
   },
-
-  cardTitleMobile: {
+  pageTitle: {
+    fontSize: 22,
+    color: Colors.secondaryColor,
+  },
+  refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: Colors.primaryColor,
+  },
+  refreshText: {
+    color: Colors.white,
     fontSize: 13,
-    color: "#666",
   },
-
-  creatorName: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: '#555',
-    marginBottom: 4
-  },
-
-  createdAt: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: '#555',
-    marginBottom: 4
-  },
-
-  creatorName: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: '#555',
-    marginBottom: 4
-  },
-
-  createdAt: {
-    fontSize: 14,
-    marginLeft: 5,
-    color: '#555',
-    marginBottom: 4
-  },
-
-  cardNumberMobile: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  detailCardMobile: {
-    marginTop: 16,
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-
-  titleMobile: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-
-  subTextMobile: {
-    fontSize: 13,
-    color: "#555",
-  },
-
-  chartCardMobile: {
-    marginTop: 16,
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-
-  sectionMobile: {
-    marginTop: 18,
-  },
-
-  topperCardMobile: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F6F6F8",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginTop: 8,
-  },
-
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#E2E8F0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-
-  avatarText: {
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-
-  topperName: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-
-  topperScore: {
-    fontSize: 12,
-    color: "#555",
-  },
-
-
-  Cards: {
-    width: "100%",
-    gap: 20,
-    flexDirection: "row",
-    height: 150,
-  },
-
-  smallCardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  summaryRow: {
+    flexDirection: 'row',
     gap: 12,
   },
-
+  summaryRowMobile: {
+    flexDirection: 'column',
+  },
   smallCard: {
     flex: 1,
-    backgroundColor: "#fff",
-    padding: 36,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#eee",
-    width: 485,
-    height: 150,
-    marginTop: 30,
-    flexDirection: "row",
-  },
-
-  Count: {
-    paddingLeft: 30,
-  },
-
-  cardTitle: {
-    fontSize: 26,
-    marginTop: 8,
-  },
-
-  cardNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-
-  detailCard: {
-    marginTop: 20,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#eee",
-    width: 560,
-    height: 400,
+    borderColor: Colors.thirdColor,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-
-  classroomDeatilTop: {
-    height: 120,
-    backgroundColor: "#DFE8FB",
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+  countWrap: {
+    flex: 1,
   },
-
-  classRoomDetailCard: {
-    flexDirection: "column",
-    alignItems: "center",
-    marginTop: 100,
+  cardLabel: {
+    fontSize: 13,
+    color: Colors.lightFont,
   },
-
-  creatorCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 5,
-    marginVertical: 5
+  cardValue: {
+    fontSize: 20,
+    color: Colors.secondaryColor,
   },
-
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
+  classroomCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.thirdColor,
+    padding: 16,
+  },
+  classroomTitle: {
+    fontSize: 20,
+    color: Colors.secondaryColor,
+    marginBottom: 6,
+  },
+  classroomMeta: {
+    color: Colors.lightFont,
+    fontSize: 14,
+  },
+  chartRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'stretch',
+  },
+  chartRowMobile: {
+    flexDirection: 'column',
+  },
+  mobileFullCard: {
+    width: '100%',
+    flex: 0,
+  },
+  chartCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.thirdColor,
+    padding: 12,
+    minHeight: 280,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lineCard: {
+    flex: 2,
+  },
+  pieCard: {
+    flex: 1,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  mobileSectionCard: {
+    width: '100%',
+    flex: 0,
+  },
+  mobileRefreshFab: {
+    position: 'absolute',
+    right: 18,
+    bottom: 20,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: Colors.primaryColor,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+  },
+  sectionCard: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.thirdColor,
+    padding: 14,
+    minHeight: 220,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    color: Colors.secondaryColor,
     marginBottom: 10,
   },
-
-  subText: {
-    fontSize: 20,
-    color: "#555",
-    marginBottom: 4,
+  emptyText: {
+    textAlign: 'center',
+    color: Colors.lightFont,
+    paddingVertical: 12,
   },
-
-  graph1: {
-    flexDirection: "row",
-  },
-
-  LineCard: {
-    marginTop: 50,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
+  topperCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F6F6F8',
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#eee",
-    width: 980,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: '#eee',
+    marginTop: 8,
+    gap: 10,
   },
-
-  chartCard: {
-    marginTop: 280,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    width: 560,
-    height: 300,
-    marginLeft: 25,
+  avatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  bottom: {
-    flexDirection: "row",
-    gap: 20,
-
-
+  avatarText: {
+    color: Colors.secondaryColor,
+    fontSize: 12,
   },
-
-  section: {
-    width: 980,
-    marginTop: 25,
+  topperName: {
+    color: Colors.secondaryColor,
+    fontSize: 14,
   },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
+  topperScore: {
+    color: Colors.lightFont,
+    fontSize: 12,
   },
-
-  topperContainerDesktop: {
-    marginTop: 10,
-    backgroundColor: Colors.white,
-    padding: 20,
-  },
-
-  topperCardDesktop: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F6F6F8",
-    padding: 46,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#eee",
-    marginTop: 10,
-    height: 100,
-    gap: 20,
-    width: 540,
-    width: 540,
-  },
-
-  nameProfile: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#E2E8F0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-
-  profileText: {
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-
-  progressIcon: {
-
-    marginHorizontal: 250
-  }
-  ,
-  sectionTopPeform: {
-    width: 580,
-    marginTop: 25,
-  }
-
 });
-
-
-

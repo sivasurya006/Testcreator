@@ -18,29 +18,52 @@ import javax.servlet.annotation.WebListener;
 @WebListener
 public class AppConfigListener implements ServletContextListener {
 
-   
-    public AppConfigListener() {
-        
-    }
+	public AppConfigListener() {
 
-    public void contextDestroyed(ServletContextEvent sce)  { 
-         
-    }
+	}
 
-    public void contextInitialized(ServletContextEvent sce)  { 
-         ServletContext context = sce.getServletContext();
-         Properties props = new Properties();
-         String path = context.getInitParameter("config.location");
-         try(InputStream is = new FileInputStream(path)){
-       		 props.load(is);
-         } catch (FileNotFoundException e) {
-       		 throw new RuntimeException("Failed to load application properties file", e);
-		 } catch (IOException e) {
-		    throw new RuntimeException("Failed to load application properties from the file", e);
-		 }
-         props.forEach((key,value) -> {
-        	context.setInitParameter(key.toString(), value.toString());
-        }); 
-    }
-	
+	public void contextDestroyed(ServletContextEvent sce) {
+
+	}
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {
+
+	    ServletContext context = sce.getServletContext();
+
+	    // Database
+	    String dbHost = System.getenv("DB_HOST");
+	    String dbPort = System.getenv("DB_PORT");
+	    String dbName = System.getenv("DB_NAME");
+	    String dbUser = System.getenv("DB_USER");
+	    String dbPassword = System.getenv("DB_PASSWORD");
+
+	    if (dbHost == null || dbPort == null || dbName == null
+	            || dbUser == null || dbPassword == null) {
+
+	        throw new RuntimeException("Missing DB environment variables");
+	    }
+
+	    String jdbcUrl = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?sslMode=REQUIRED";
+
+	    context.setAttribute("db.url", jdbcUrl);
+	    context.setAttribute("db.user", dbUser);
+	    context.setAttribute("db.password", dbPassword);
+
+	    // JWT + Password Config
+	    String jwtSecret = System.getenv("JWT_SECRET");
+	    String jwtExpiry = System.getenv("JWT_EXPIRY_HOURS");
+	    String passwdCost = System.getenv("PASSWD_COST");
+
+	    if (jwtSecret == null) {
+	        throw new RuntimeException("JWT_SECRET not configured");
+	    }
+
+	    context.setAttribute("jwt.secret", jwtSecret);
+	    context.setAttribute("jwt.expiryHours",
+	            jwtExpiry != null ? Integer.parseInt(jwtExpiry) : 24);
+
+	    context.setAttribute("passwd.costFactor",
+	            passwdCost != null ? Integer.parseInt(passwdCost) : 10);
+	}
+
 }
