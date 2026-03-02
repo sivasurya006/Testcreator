@@ -55,6 +55,7 @@ api.interceptors.response.use(null, (error) => {
             } else {
                 localStorage.removeItem("token");
             }
+            router.replace(navLink);
         }
         signOut();
     }
