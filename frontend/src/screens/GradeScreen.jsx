@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity , ScrollView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import { useEffect, useState } from 'react'
 import FillInBlankQuestion from '../components/FillIntheBlankQuestion'
 import MatchingQuestion from '../components/MatchingQuestion'
@@ -11,6 +11,8 @@ import { AntDesign } from '@expo/vector-icons'
 import ConfirmModal from '../components/modals/ConfirmModal'
 import { useGlobalSearchParams } from 'expo-router'
 import api from '../../util/api'
+import { StatusBar } from 'expo-status-bar'
+import { useWindowDimensions } from 'react-native'
 
 export default function GradeScreen({ attemptId, questions, isGradeScreenOpen, onExit, setAttempts, attempts }) {
 
@@ -18,6 +20,8 @@ export default function GradeScreen({ attemptId, questions, isGradeScreenOpen, o
     const [questionState, setQuestionState] = useState(questions || []);
     const [gradeData, setGradeData] = useState({})
     const [confirmGradeVisible, setConfirmGradeVisible] = useState(false);
+    const { width } = useWindowDimensions();
+    const isMobile = width < 768;
 
     const { classroomId } = useGlobalSearchParams();
 
@@ -42,8 +46,6 @@ export default function GradeScreen({ attemptId, questions, isGradeScreenOpen, o
         if (!questions) return;
         setQuestionState(questions);
     }, [questions]);
-
-    console.log("grade data ", gradeData)
 
     useEffect(() => {
         if (!questions) return;
@@ -95,133 +97,159 @@ export default function GradeScreen({ attemptId, questions, isGradeScreenOpen, o
     };
 
     return (
-        // <Modal
-        //     visible={isGradeScreenOpen}
-        //     animationType="fade"
-        //     onRequestClose={onExit}
-        //     onDismiss={onExit}
-        // >
-        <View style={styles.container}>
-            <View style={styles.headerContainer}>
-                <TouchableOpacity onPress={onExit} style={styles.closeButton}>
-                    <AntDesign name="close" size={24} color="black" />
-                </TouchableOpacity>
-                <AppBoldText style={styles.topHeaderText}>
-                    Answer Sheet
-                </AppBoldText>
-                <View style={styles.bottomActions}>
+        <>
+            <StatusBar style="light" translucent />
+            <View style={[
+                styles.container,
+                isMobile && { padding: 12 }
+            ]}>
 
-                    <TouchableOpacity
+                <View style={[
+                    styles.headerContainer,
+                    isMobile && styles.headerContainerMobile
+                ]}>
 
-                        onPress={handleGradeAnswers}
-
-                        style={styles.validButton}>
-                        <Text style={styles.validText}>Grade Result</Text>
-                    </TouchableOpacity>
-                </View>
-
-            </View>
-            <View style={styles.summaryContainer}>
-                <View style={styles.summaryCard}>
-                    <Text style={styles.summaryNumber}>{obtainedMarks}/{totalMarks}</Text>
-                    <Text style={styles.summaryLabel}>Total Score</Text>
-                </View>
-
-                <View style={styles.summaryDivider} />
-
-                <View style={styles.summaryCard}>
-                    <Text style={[styles.summaryNumber, { color: '#16A34A' }]}>
-                        {correctCount}
-                    </Text>
-                    <Text style={styles.summaryLabel}>Correct</Text>
-                </View>
-
-                <View style={styles.summaryDivider} />
-
-                <View style={styles.summaryCard}>
-                    <Text style={[styles.summaryNumber, { color: '#DC2626' }]}>
-                        {wrongCount}
-                    </Text>
-                    <Text style={styles.summaryLabel}>Wrong</Text>
-                </View>
-            </View>
-            <ScrollView style={{
-                flex: 1,
-                maxWidth: 1200,
-                width: '100%',
-                boxShadow: Colors.blackBoxShadow,
-                marginHorizontal: 10,
-                elevation: 6,
-                borderRadius: 8,
-                paddingVertical: 10,
-                paddingHorizontal: 20,
-                backgroundColor: Colors.white,
-            }}>
-                {
-
-
-                    questionState?.map((ques, index) => (
-                        <View key={ques.id} style={{ margin: 20 }}>
-                            {
-                                <>
-                                    <View style={{ position: 'relative' }}>
-                                        {getQuestion(ques, index + 1)}
-
-                                        {ques.isCorrect === true && (
-                                            <View style={[styles.resultIcon, styles.correctIcon]}>
-                                                <AntDesign name="check-circle" size={22} color={Colors.primaryColor} />
-                                            </View>
-                                        )}
-
-                                        {ques.isCorrect === false && (
-                                            <View style={[styles.resultIcon, styles.wrongIcon]}>
-                                                <AntDesign name="close-circle" size={22} color="#DC2626" />
-                                            </View>
-                                        )}
-                                    </View>
-                                    <View style={styles.actionRow}>
-                                        <TouchableOpacity
-                                            style={[styles.actionBtn, styles.invalidOutline]}
-                                            onPress={() => handleMarkQuestion(ques.id, false)}
-                                        >
-                                            <AppMediumText style={styles.invalidTextOutline}>Invalid</AppMediumText>
-                                        </TouchableOpacity>
-
-                                        <TouchableOpacity
-                                            style={[styles.actionBtn, styles.validOutline]}
-                                            onPress={() => handleMarkQuestion(ques.id, true)}
-                                        >
-                                            <AppMediumText style={styles.validTextOutline}>Valid</AppMediumText>
-                                        </TouchableOpacity>
-                                    </View>
-                                </>
-                            }
-                        </View>
-                    ))
-                }
-            </ScrollView >
-            <ConfirmModal normal={true}
-                onCancel={() => setConfirmGradeVisible(false)}
-                onConfirm={() => {
-                    if (gradeAnswerSheet(classroomId, attemptId, obtainedMarks, gradeData)) {
-                        setAttempts({
-                            attempts: attempts.map(a => {
-                                if (a.attemptId == attemptId) {
-                                    a.marks = obtainedMarks
-                                    a.status = 'EVALUATED'
-                                }
-
-                                return a;
-                            })
-                        })
+                    {
+                        isMobile ? (
+                            <>
+                                <TouchableOpacity onPress={onExit} style={[styles.closeButton,{position : 'absolute' , left : 0 }]} >
+                                    <AntDesign name="close" size={24} color="black" />
+                                </TouchableOpacity>
+                                <AppBoldText style={[
+                                    styles.topHeaderText,
+                                    isMobile && { fontSize: 20 }
+                                ]}>
+                                    Answer Sheet
+                                </AppBoldText>
+                            </>
+                        ) : (
+                            <>
+                                <TouchableOpacity onPress={onExit} style={styles.closeButton}>
+                                    <AntDesign name="close" size={24} color="black" />
+                                </TouchableOpacity>
+                                <AppBoldText style={[
+                                    styles.topHeaderText,
+                                    isMobile && { fontSize: 20 }
+                                ]}>
+                                    Answer Sheet
+                                </AppBoldText>
+                            </>
+                        )
                     }
-                    onExit();
-                }
-                }
-                message={'Grade the Answer sheet?'}
-                visible={confirmGradeVisible} />
-        </View >
-        // </Modal >
+                    <View style={styles.bottomActions}>
+
+                        <TouchableOpacity
+
+                            onPress={handleGradeAnswers}
+
+                            style={[styles.validButton,isMobile && { paddingVertical: 12, paddingHorizontal: 20 }]}>
+                            <Text style={styles.validText}>Grade Result</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                </View>
+                <View style={styles.summaryContainer}>
+                    <View style={styles.summaryCard}>
+                        <Text style={styles.summaryNumber}>{obtainedMarks}/{totalMarks}</Text>
+                        <Text style={styles.summaryLabel}>Total Score</Text>
+                    </View>
+
+                    <View style={styles.summaryDivider} />
+
+                    <View style={styles.summaryCard}>
+                        <Text style={[styles.summaryNumber, { color: '#16A34A' }]}>
+                            {correctCount}
+                        </Text>
+                        <Text style={styles.summaryLabel}>Correct</Text>
+                    </View>
+
+                    <View style={styles.summaryDivider} />
+
+                    <View style={styles.summaryCard}>
+                        <Text style={[styles.summaryNumber, { color: '#DC2626' }]}>
+                            {wrongCount}
+                        </Text>
+                        <Text style={styles.summaryLabel}>Wrong</Text>
+                    </View>
+                </View>
+                <ScrollView style={{
+                    flex: 1,
+                    maxWidth: 1200,
+                    width: '100%',
+                    boxShadow: Colors.blackBoxShadow,
+                    marginHorizontal: 10,
+                    elevation: 6,
+                    borderRadius: 8,
+                    paddingVertical: 10,
+                    paddingHorizontal: 20,
+                    backgroundColor: Colors.white,
+                }}>
+                    {
+
+
+                        questionState?.map((ques, index) => (
+                            <View key={ques.id} style={{ margin: 20 }}>
+                                {
+                                    <>
+                                        <View style={{ position: 'relative' }}>
+                                            {getQuestion(ques, index + 1)}
+
+                                            {ques.isCorrect === true && (
+                                                <View style={[styles.resultIcon, styles.correctIcon]}>
+                                                    <AntDesign name="check-circle" size={22} color={Colors.primaryColor} />
+                                                </View>
+                                            )}
+
+                                            {ques.isCorrect === false && (
+                                                <View style={[styles.resultIcon, styles.wrongIcon]}>
+                                                    <AntDesign name="close-circle" size={22} color="#DC2626" />
+                                                </View>
+                                            )}
+                                        </View>
+                                        <View style={styles.actionRow}>
+                                            <TouchableOpacity
+                                                style={[styles.actionBtn, styles.invalidOutline]}
+                                                onPress={() => handleMarkQuestion(ques.id, false)}
+                                            >
+                                                <AppMediumText style={styles.invalidTextOutline}>Invalid</AppMediumText>
+                                            </TouchableOpacity>
+
+                                            <TouchableOpacity
+                                                style={[styles.actionBtn, styles.validOutline]}
+                                                onPress={() => handleMarkQuestion(ques.id, true)}
+                                            >
+                                                <AppMediumText style={styles.validTextOutline}>Valid</AppMediumText>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </>
+                                }
+                            </View>
+                        ))
+                    }
+                </ScrollView >
+                <ConfirmModal normal={true}
+                    onCancel={() => setConfirmGradeVisible(false)}
+                    onConfirm={() => {
+                        if (gradeAnswerSheet(classroomId, attemptId, obtainedMarks, gradeData)) {
+                            setAttempts({
+                                attempts: attempts.map(a => {
+                                    if (a.attemptId == attemptId) {
+                                        a.marks = obtainedMarks
+                                        a.status = 'EVALUATED'
+                                    }
+
+                                    return a;
+                                })
+                            })
+                        }
+                        onExit();
+                    }
+                    }
+                    message={'Grade the Answer sheet?'}
+                    visible={confirmGradeVisible} />
+            </View >
+
+        </>
     )
 }
 
@@ -329,6 +357,11 @@ const styles = StyleSheet.create({
         padding: 20,
         flex: 1,
         alignItems: 'center',
+    },
+    headerContainerMobile: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 10,
     },
     topHeaderText: {
         fontSize: 28,

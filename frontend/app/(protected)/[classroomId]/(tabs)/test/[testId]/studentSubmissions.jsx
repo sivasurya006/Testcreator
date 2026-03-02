@@ -137,7 +137,7 @@ export default function StudentSubmissions() {
             data={filteredData}
             keyExtractor={item => item.attemptId + ""}
             renderItem={({ item }) => (
-              <AttemptCard attempt={item} setFilteredData={setFilteredData} handleGrade={handleGrade} handleShowReport={handleShowReport} />
+              <AttemptCard attempt={item} setFilteredData={setFilteredData} handleGrade={handleGrade} handleShowReport={handleShowReport}  isStudent={true}/>
             )}
           />
         )
@@ -178,6 +178,9 @@ async function getStudentAttempts(classroomId, testId, studentId) {
 
 
 async function getAnswerSheet(classroomId, testId, attemptId) {
+
+
+
   try {
     const result = await api.get(`/api/tests/answerSheet?attempt=${attemptId}`, {
       headers: {

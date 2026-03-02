@@ -51,7 +51,7 @@ export default function StudentTest({ data, isStudentTest = true }) {
     function handleGrade() {
         console.log("in handle grade", classroomId, data.testId, data.userId)
         router.push({
-            pathname: '/student/[classroomId]/studentSubmission',
+            pathname: '/student/[classroomId]/studentTestSubmissions/studentSubmission',
             params: {
                 classroomId: classroomId,
                 testId: data.testId,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
     },
     disabledButton: {
-        backgroundColor: '#D1D5DB', // light gray
+        backgroundColor: '#D1D5DB', 
     },
     card: {
         backgroundColor: Colors.white,

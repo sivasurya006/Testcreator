@@ -34,6 +34,7 @@ export default function StudentSubmissions() {
   const { classroomId, testId } = useGlobalSearchParams();
 
   async function handleGrade(attemptId) {
+    console.log("grading attempt =============================== ", attemptId)
     const answer = await getAnswerSheet(classroomId, testId, attemptId);
     setAnswerSheet(answer);
     setAttemptId(attemptId);

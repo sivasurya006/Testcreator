@@ -1,12 +1,13 @@
 import { View, ScrollView, StyleSheet, Modal, TouchableOpacity, useWindowDimensions, Platform } from 'react-native'
 import Colors from '../../styles/Colors'
-import { AppBoldText, AppSemiBoldText} from '../../styles/fonts'
+import { AppBoldText, AppSemiBoldText } from '../../styles/fonts'
 import McqQuestion from './McqQuestion'
 import SingleChoiceQuestion from './SingleChoiceQuestion'
 import FillInBlankQuestion from './FillIntheBlankQuestion'
 import MatchingQuestion from './MatchingQuestion'
 import BooleanQuestion from './BooleanQuestion';
 import { AntDesign } from '@expo/vector-icons'
+import { StatusBar } from 'expo-status-bar'
 
 export default function DetailedTestReport({ isGradeScreenOpen, onExit, totalMarks, questions, noModal = false, isResultPageOpen }) {
 
@@ -20,7 +21,7 @@ export default function DetailedTestReport({ isGradeScreenOpen, onExit, totalMar
     const numberOfQuestion = questions?.length;
     const correctQuestions = questions?.reduce((sum, question) => {
         const selectedOptionIsCorrect = question.selectedOptions?.some(
-            option => option.correct 
+            option => option.correct
         );
         return (question.givenMarks > 0 || selectedOptionIsCorrect) ? sum + 1 : sum;
     }, 0) || 0;
@@ -30,84 +31,88 @@ export default function DetailedTestReport({ isGradeScreenOpen, onExit, totalMar
 
     function renderComponent() {
         return (
-            <View style={[styles.container, { paddingHorizontal: horizontalPadding, paddingTop: isMobile ? 10 : 18 }]}>
-                <View style={[styles.headerContainer, { maxWidth: contentMaxWidth }]}>
-                    <AppBoldText style={styles.topHeaderText}>
-                        Test Report
-                    </AppBoldText>
+            <>
+                <StatusBar style="light" translucent />
+                <View style={[styles.container, { paddingHorizontal: horizontalPadding, paddingTop: isMobile ? 10 : 18 }]}>
+                    <View style={[styles.headerContainer, { maxWidth: contentMaxWidth }]}>
+                        <AppBoldText style={styles.topHeaderText}>
+                            Test Report
+                        </AppBoldText>
 
-                    <TouchableOpacity onPress={onExit} style={styles.closeButton}>
-                        <AntDesign name="close" size={24} color="black" />
-                    </TouchableOpacity>
-                </View>
-                <View
-                    style={[
-                        styles.reportContainer,
-                        {
-                            maxWidth: contentMaxWidth,
-                            flexDirection: isMobile ? 'column' : 'row',
-                            paddingVertical: isMobile ? 14 : 22,
-                            paddingHorizontal: isMobile ? 10 : 16,
-                            gap: isMobile ? 10 : 0,
-                        }
-                    ]}
-                >
-                    <View style={styles.reportItem}>
-                        <AppSemiBoldText style={styles.reportTitle}>
-                            TOTAL MARKS
-                        </AppSemiBoldText>
-                        <AppBoldText style={styles.reportNumber}>
-                            {totalMarks}
-                        </AppBoldText>
+                        <TouchableOpacity onPress={onExit} style={styles.closeButton}>
+                            <AntDesign name="close" size={24} color="black" />
+                        </TouchableOpacity>
                     </View>
-                    {!isMobile && <View style={styles.line} />}
-                    <View style={styles.reportItem}>
-                        <AppSemiBoldText style={styles.reportTitle}>
-                            SCORE PERCENTAGE
-                        </AppSemiBoldText>
-                        <AppBoldText style={styles.reportNumber}>
-                            {scorePercentage}%
-                        </AppBoldText>
-                    </View>
-                    {!isMobile && <View style={styles.line} />}
-                    <View style={styles.reportItem}>
-                        <AppSemiBoldText style={styles.reportTitle}>
-                            CORRECT QUESTIONS
-                        </AppSemiBoldText>
-                        <AppBoldText style={styles.reportNumber}>
-                            {correctQuestions}
-                            <AppSemiBoldText style={styles.lightText}>
-                                {" / "}{numberOfQuestion}
+                    <View
+                        style={[
+                            styles.reportContainer,
+                            {
+                                maxWidth: contentMaxWidth,
+                                flexDirection: isMobile ? 'column' : 'row',
+                                paddingVertical: isMobile ? 14 : 22,
+                                paddingHorizontal: isMobile ? 10 : 16,
+                                gap: isMobile ? 10 : 0,
+                                ...(isMobile && { flex: 0.4 })
+                            }
+                        ]}
+                    >
+                        <View style={styles.reportItem}>
+                            <AppSemiBoldText style={styles.reportTitle}>
+                                TOTAL MARKS
                             </AppSemiBoldText>
-                        </AppBoldText>
+                            <AppBoldText style={styles.reportNumber}>
+                                {totalMarks}
+                            </AppBoldText>
+                        </View>
+                        {!isMobile && <View style={styles.line} />}
+                        <View style={styles.reportItem}>
+                            <AppSemiBoldText style={styles.reportTitle}>
+                                SCORE PERCENTAGE
+                            </AppSemiBoldText>
+                            <AppBoldText style={styles.reportNumber}>
+                                {scorePercentage}%
+                            </AppBoldText>
+                        </View>
+                        {!isMobile && <View style={styles.line} />}
+                        <View style={styles.reportItem}>
+                            <AppSemiBoldText style={styles.reportTitle}>
+                                CORRECT QUESTIONS
+                            </AppSemiBoldText>
+                            <AppBoldText style={styles.reportNumber}>
+                                {correctQuestions}
+                                <AppSemiBoldText style={styles.lightText}>
+                                    {" / "}{numberOfQuestion}
+                                </AppSemiBoldText>
+                            </AppBoldText>
+                        </View>
                     </View>
-                </View>
-                <ScrollView
-                    style={[
-                        styles.questionsCard,
+                    <ScrollView
+                        style={[
+                            styles.questionsCard,
+                            {
+                                maxWidth: contentMaxWidth,
+                                borderRadius: isMobile ? 10 : 14,
+                                paddingHorizontal: horizontalPadding,
+                                paddingTop: isMobile ? 10 : 14,
+                                ...(Platform.OS === 'web' ? { boxShadow: Colors.blackBoxShadow } : {}),
+                            }
+                        ]}
+                        contentContainerStyle={{ paddingBottom: 16 }}
+                        showsVerticalScrollIndicator={false}
+                    >
                         {
-                            maxWidth: contentMaxWidth,
-                            borderRadius: isMobile ? 10 : 14,
-                            paddingHorizontal: horizontalPadding,
-                            paddingTop: isMobile ? 10 : 14,
-                            ...(Platform.OS === 'web' ? { boxShadow: Colors.blackBoxShadow } : {}),
+                            questions?.map((ques, index) => (
+                                <View key={ques.id ?? index} style={{ marginBottom: questionGap }}>
+                                    {
+                                        getQuestion(ques, index + 1)
+                                    }
+                                </View>
+                            ))
                         }
-                    ]}
-                    contentContainerStyle={{ paddingBottom: 16 }}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {
-                        questions?.map((ques, index) => (
-                            <View key={ques.id ?? index} style={{ marginBottom: questionGap }}>
-                                {
-                                    getQuestion(ques, index + 1)
-                                }
-                            </View>
-                        ))
-                    }
-                </ScrollView>
+                    </ScrollView>
 
-            </View>
+                </View>
+            </>
         )
     }
 

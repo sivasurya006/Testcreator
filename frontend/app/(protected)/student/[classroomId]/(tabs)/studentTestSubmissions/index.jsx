@@ -10,6 +10,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 export default function StudentSubmissions() {
 
 
@@ -73,28 +74,31 @@ export default function StudentSubmissions() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.bgColor }}>
+    <>
+      <StatusBar style="light" translucent />
+      <View style={{ flex: 1, backgroundColor: Colors.bgColor }}>
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={18} color={Colors.dimBg} />
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={18} color={Colors.dimBg} />
 
-        <TextInput
-          placeholder="Search by test name"
-          value={searchText}
-          onChangeText={setSearchText}
-          style={styles.searchInput}
+          <TextInput
+            placeholder="Search by test name"
+            value={searchText}
+            onChangeText={setSearchText}
+            style={styles.searchInput}
+          />
+        </View>
+
+        <FlatList
+          data={filteredTests}
+          keyExtractor={(item) => item.testId.toString()}
+          renderItem={({ item }) => (
+            <StudentTest data={item} isStudentTest={false} />
+          )}
         />
+
       </View>
-
-      <FlatList
-        data={filteredTests}
-        keyExtractor={(item) => item.testId.toString()}
-        renderItem={({ item }) => (
-          <StudentTest data={item} isStudentTest={false} />
-        )}
-      />
-
-    </View>
+    </>
   );
 }
 

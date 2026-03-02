@@ -5,15 +5,7 @@ import Colors from '../../../styles/Colors'
 import { fonts } from '../../../styles/fonts'
 import ConfirmModal from '../modals/ConfirmModal'
 
-export default function TestHeader({
-  data,
-  onExit,
-  onSubmit,
-  onTimeEnd,
-  forceSubmit,
-  questionAreaLeftInset = 0,
-  questionAreaRightInset = 0
-}) {
+export default function TestHeader({data,onExit,onSubmit,onTimeEnd,forceSubmit,questionAreaLeftInset = 0,questionAreaRightInset = 0}) {
   const [timeLeft, setTimeLeft] = useState(data.duration * 60);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
 

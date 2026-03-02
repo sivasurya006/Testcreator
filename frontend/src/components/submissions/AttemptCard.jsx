@@ -28,6 +28,9 @@ function getTime(seconds) {
 
 
 
+
+
+
 export default function AttemptCard({ attempt, handleGrade, handleShowReport, isStudent = false }) {
     const { width } = useWindowDimensions();
     const isLargeScreen = width > 821;
@@ -37,7 +40,7 @@ export default function AttemptCard({ attempt, handleGrade, handleShowReport, is
     const { formattedDate: startedDate, formattedTime: startedTime } = getDateTime(attempt.startedAt);
     const { formattedDate: submittedDate, formattedTime: submittedTime } = getDateTime(attempt.submittedAt)
     const timeTaken = getTime(attempt.timeTaken)
-    console.log("in Attempt Card", attempt)
+    
     return (
         <View style={styles.card}>
             <View
