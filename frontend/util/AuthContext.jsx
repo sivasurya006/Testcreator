@@ -53,27 +53,30 @@ export default function AuthContextProvider({ children }) {
 
     const pathName = usePathname();
 
-    useEffect(() => {
-    
+    const getUserDetails = async () => {
 
-        if(pathName.includes('/signin') || pathName.includes('/signup') || pathName.includes('join')) {
+        try {
+            setLoading(true);
+            const result = await api.get('/api/profile');
+            if (result?.status === 200 && result?.data) {
+                setUser(result.data);
+            }
+        } catch (err) {
+            console.log("Error fetching user details:", err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+
+
+        if (pathName.includes('/signin') || pathName.includes('/signup') || pathName.includes('join')) {
+            console.log("AuthContext: Skipping auth check for path:", pathName);
             return;
         }
 
-        const getUserDetails = async () => {
 
-            try {
-                setLoading(true);
-                const result = await api.get('/api/profile');
-                if (result?.status === 200 && result?.data) {
-                    setUser(result.data);
-                }
-            } catch (err) {
-                console.log("Error fetching user details:", err);
-            } finally {
-                setLoading(false);
-            }
-        }
         getUserDetails();
     }, []);
 
@@ -91,13 +94,7 @@ export default function AuthContextProvider({ children }) {
                 return { success: false, error: errorText };
             }
 
-            // store basic user info from response if provided
-            if (res.data.user) {
-                setUser(res.data.user);
-            } else {
-                setUser({ email: userEmail, name: userName });
-            }
-
+            await getUserDetails();
             router.replace('/');
 
             {/** If the client from mobile we need to store the token in SecureStore Memory in mobile (ios/android) */ }
@@ -134,13 +131,7 @@ export default function AuthContextProvider({ children }) {
                 const errorText = res.data.message;
                 return { success: false, error: errorText };
             }
-
-            // capture user info if server sends it
-            if (res.data.user) {
-                setUser(res.data.user);
-            } else {
-                setUser({ email: userEmail });
-            }
+            await getUserDetails();
 
             router.replace('/');
             {/** If the client from mobile we need to store the token in SecureStore Memory in mobile (ios/android) */ }
