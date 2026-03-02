@@ -59,9 +59,9 @@ api.interceptors.response.use(null, (error) => {
         }
 
         signOut();
-        
-        throw error;
     }
+
+    throw error;
 });
 
 
