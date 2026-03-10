@@ -94,15 +94,16 @@ export default function AuthContextProvider({ children }) {
                 return { success: false, error: errorText };
             }
 
-            await getUserDetails();
-            router.replace('/');
-
             {/** If the client from mobile we need to store the token in SecureStore Memory in mobile (ios/android) */ }
             if (Platform.OS != 'web') {
                 await SecureStore.setItemAsync("token", res.data.token);
             } else {
                 localStorage.setItem("token", res.data.token);
             }
+
+            await getUserDetails();
+            router.replace('/');
+
 
             return { success: true };
 
@@ -131,15 +132,18 @@ export default function AuthContextProvider({ children }) {
                 const errorText = res.data.message;
                 return { success: false, error: errorText };
             }
-            await getUserDetails();
 
-            router.replace('/');
             {/** If the client from mobile we need to store the token in SecureStore Memory in mobile (ios/android) */ }
             if (Platform.OS != 'web') {
                 await SecureStore.setItemAsync("token", res.data.token);
             } else {
                 localStorage.setItem("token", res.data.token);
             }
+
+            await getUserDetails();
+
+            router.replace('/');
+
             return { success: true };
         } catch (e) {
             // TODO implement logger (sign in failed)
@@ -165,7 +169,7 @@ export default function AuthContextProvider({ children }) {
 
     return (
 
-        <AuthContext.Provider value={{ isLoading, signIn, signUp, signOut, user , setUser }}>
+        <AuthContext.Provider value={{ isLoading, signIn, signUp, signOut, user, setUser }}>
             {children}
         </AuthContext.Provider>
 
