@@ -268,10 +268,10 @@ export default function AIQuestionGeneratorBot({ onUseQuestion }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-api-key': AI_API_KEY,
         },
         body: JSON.stringify({
           prompt: `${prompt.trim()}\n\nReturn JSON only. Prefer an array of questions. Each question must contain keys: marks, questionText, type, options.`,
-          'x-api-key': AI_API_KEY,
         }),
       });
 
@@ -416,7 +416,7 @@ export default function AIQuestionGeneratorBot({ onUseQuestion }) {
                 <AppRegularText>Close</AppRegularText>
               </Pressable> */}
               <Pressable style={styles.askBtn} onPress={askAi} disabled={loading || saving}>
-                {loading  ? (
+                {loading ? (
                   <ActivityIndicator size="small" color={Colors.white} />
                 ) : (
                   <AppRegularText style={{ color: Colors.white }}>
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.secondaryColor , //'#52465C',
+    backgroundColor: Colors.secondaryColor, //'#52465C',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 6,
